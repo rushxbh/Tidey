@@ -2,19 +2,32 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
+interface FormData {
+  name: string
+  email: string
+  phone: string
+  password: string
+  confirmPassword: string
+  age: string
+  area: string
+  interests: string[]
+  orgName: string
+  regNumber: string
+  website: string
+  description: string
+}
+
 function RegisterPage() {
   const [userType, setUserType] = useState('volunteer')
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     phone: '',
     password: '',
     confirmPassword: '',
-    // Volunteer specific
     age: '',
     area: '',
     interests: [],
-    // NGO specific
     orgName: '',
     regNumber: '',
     website: '',
@@ -27,7 +40,7 @@ function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
@@ -35,7 +48,7 @@ function RegisterPage() {
     }))
   }
 
-  const handleInterestChange = (interest) => {
+  const handleInterestChange = (interest: string) => {
     setFormData(prev => {
       const interests = [...prev.interests]
       if (interests.includes(interest)) {
@@ -52,7 +65,7 @@ function RegisterPage() {
     })
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     
@@ -101,7 +114,7 @@ function RegisterPage() {
         setError(result.error || 'Registration failed. Please try again.')
       }
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.')
+      setError((err as Error).message || 'Registration failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

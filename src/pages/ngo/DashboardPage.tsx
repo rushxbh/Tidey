@@ -1,9 +1,37 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, Users, Trash2, Award, ArrowRight, PlusCircle } from 'lucide-react'
-import { format } from 'date-fns'
 
-const beaches = [
+interface Beach {
+  id: string
+  name: string
+}
+
+interface Event {
+  id: string
+  title: string
+  date: string
+  beach_id: string
+  status: string
+  created_at?: string
+  beach?: Beach
+}
+
+interface Activity {
+  type: string
+  message: string
+  time: string
+  icon: any
+}
+
+interface Stats {
+  totalEvents: number
+  volunteers: number
+  wasteCollected: string
+  badgesAwarded: number
+}
+
+const beaches: Beach[] = [
   { id: '1', name: 'Juhu Beach' },
   { id: '2', name: 'Versova Beach' },
   { id: '3', name: 'Dadar Chowpatty' },
@@ -12,14 +40,14 @@ const beaches = [
 ]
 
 function NgoDashboardPage() {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<Stats>({
     totalEvents: 0,
     volunteers: 0,
     wasteCollected: '0 kg',
     badgesAwarded: 0
   })
-  const [upcomingEvents, setUpcomingEvents] = useState([])
-  const [recentActivity, setRecentActivity] = useState([])
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([])
+  const [recentActivity, setRecentActivity] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -29,7 +57,7 @@ function NgoDashboardPage() {
   const loadDashboardData = () => {
     try {
       // Load events from localStorage
-      const events = JSON.parse(localStorage.getItem('tidewy_events') || '[]')
+      const events: Event[] = JSON.parse(localStorage.getItem('tidewy_events') || '[]')
       
       // Add beach names to events
       const eventsWithBeaches = events.map(event => ({
@@ -55,7 +83,7 @@ function NgoDashboardPage() {
       setUpcomingEvents(upcomingEventsData)
       
       // Generate recent activity from events
-      const activities = events.slice(0, 4).map(event => ({
+      const activities: Activity[] = events.slice(0, 4).map(event => ({
         type: 'event',
         message: `Event "${event.title}" was created`,
         time: event.created_at || new Date().toISOString(),
@@ -70,13 +98,13 @@ function NgoDashboardPage() {
     }
   }
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString)
       if (isNaN(date.getTime())) {
         return 'N/A'
       }
-      return format(date, 'MMM dd, HH:mm')
+      return date.toLocaleDateString()
     } catch (error) {
       return 'N/A'
     }
@@ -204,7 +232,7 @@ function NgoDashboardPage() {
                         {event.title}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
-                        {format(new Date(event.date), 'PPP')} at {format(new Date(event.date), 'p')}
+                        {formatDate(event.date)}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
                         {event.beach?.name}

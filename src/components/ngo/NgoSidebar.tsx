@@ -2,7 +2,12 @@ import { Link, useLocation } from 'react-router-dom'
 import { Waves as Wave, LayoutDashboard, Calendar, FileText, Settings, LogOut, X, BarChart3 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
-function NgoSidebar({ sidebarOpen, setSidebarOpen }) {
+interface NgoSidebarProps {
+  sidebarOpen: boolean
+  setSidebarOpen: (open: boolean) => void
+}
+
+function NgoSidebar({ sidebarOpen, setSidebarOpen }: NgoSidebarProps) {
   const location = useLocation()
   const { logout } = useAuth()
   

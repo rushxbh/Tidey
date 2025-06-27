@@ -2,8 +2,35 @@ import { useState, useEffect } from 'react'
 import { Download, Filter, Calendar, FileText } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
+interface MonthlyData {
+  name: string
+  plastic: number
+  glass: number
+  metal: number
+  organic: number
+}
+
+interface LocationData {
+  name: string
+  value: number
+  color: string
+}
+
+interface Report {
+  id: number
+  title: string
+  date: string
+  description: string
+  type: string
+}
+
+interface DateRange {
+  start: string
+  end: string
+}
+
 // Mock data
-const mockMonthlyData = [
+const mockMonthlyData: MonthlyData[] = [
   { name: 'Jan', plastic: 120, glass: 45, metal: 30, organic: 25 },
   { name: 'Feb', plastic: 150, glass: 55, metal: 35, organic: 30 },
   { name: 'Mar', plastic: 180, glass: 60, metal: 40, organic: 35 },
@@ -12,7 +39,7 @@ const mockMonthlyData = [
   { name: 'Jun', plastic: 240, glass: 75, metal: 55, organic: 50 },
 ]
 
-const mockLocationData = [
+const mockLocationData: LocationData[] = [
   { name: 'Juhu Beach', value: 350, color: '#0088ff' },
   { name: 'Versova Beach', value: 300, color: '#00ffbd' },
   { name: 'Dadar Chowpatty', value: 250, color: '#ffb900' },
@@ -20,7 +47,7 @@ const mockLocationData = [
   { name: 'Mahim Beach', value: 150, color: '#9c27b0' },
 ]
 
-const mockReports = [
+const mockReports: Report[] = [
   {
     id: 1,
     title: 'June 2023 Cleanup Report',
@@ -59,12 +86,12 @@ const mockReports = [
 ]
 
 function NgoReportsPage() {
-  const [monthlyData, setMonthlyData] = useState([])
-  const [locationData, setLocationData] = useState([])
-  const [reports, setReports] = useState([])
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([])
+  const [locationData, setLocationData] = useState<LocationData[]>([])
+  const [reports, setReports] = useState<Report[]>([])
   const [activeFilter, setActiveFilter] = useState('all')
-  const [filteredReports, setFilteredReports] = useState([])
-  const [dateRange, setDateRange] = useState({
+  const [filteredReports, setFilteredReports] = useState<Report[]>([])
+  const [dateRange, setDateRange] = useState<DateRange>({
     start: '2023-01-01',
     end: '2023-06-30',
   })
@@ -85,7 +112,7 @@ function NgoReportsPage() {
     }
   }, [activeFilter, reports])
 
-  const handleDateRangeChange = (e) => {
+  const handleDateRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setDateRange(prev => ({
       ...prev,

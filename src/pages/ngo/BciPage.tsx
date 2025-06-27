@@ -2,7 +2,21 @@ import { useState } from 'react'
 import { MapPin, TrendingUp, Download, RefreshCw, BarChart3, Calendar } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 
-const mockBciData = [
+interface BciDataItem {
+  id: string
+  beach: { name: string }
+  score: number
+  calculated_at: string
+}
+
+interface AnalyticsData {
+  averageScores: Array<{ name: string; average: number }>
+  distributionData: Array<{ name: string; value: number; color: string }>
+  totalReadings: number
+  overallAverage: number
+}
+
+const mockBciData: BciDataItem[] = [
   {
     id: '1',
     beach: { name: 'Juhu Beach' },
@@ -35,7 +49,7 @@ const mockBciData = [
   }
 ]
 
-const mockAnalyticsData = {
+const mockAnalyticsData: AnalyticsData = {
   averageScores: [
     { name: 'Juhu Beach', average: 65 },
     { name: 'Versova Beach', average: 80 },
@@ -54,17 +68,17 @@ const mockAnalyticsData = {
 }
 
 function NgoBciPage() {
-  const [bciData] = useState(mockBciData)
-  const [analyticsData] = useState(mockAnalyticsData)
+  const [bciData] = useState<BciDataItem[]>(mockBciData)
+  const [analyticsData] = useState<AnalyticsData>(mockAnalyticsData)
 
-  const getScoreColor = (score) => {
+  const getScoreColor = (score: number): string => {
     if (score >= 80) return 'text-green-600 bg-green-100'
     if (score >= 60) return 'text-yellow-600 bg-yellow-100'
     if (score >= 40) return 'text-orange-600 bg-orange-100'
     return 'text-red-600 bg-red-100'
   }
 
-  const getScoreLabel = (score) => {
+  const getScoreLabel = (score: number): string => {
     if (score >= 80) return 'Excellent'
     if (score >= 60) return 'Good'
     if (score >= 40) return 'Fair'

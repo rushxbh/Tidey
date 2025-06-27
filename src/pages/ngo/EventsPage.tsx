@@ -3,7 +3,24 @@ import { Link } from 'react-router-dom'
 import { PlusCircle, Calendar, MapPin, Users, Filter, Search } from 'lucide-react'
 import { format } from 'date-fns'
 
-const beaches = [
+interface Beach {
+  id: string
+  name: string
+}
+
+interface Event {
+  id: string
+  title: string
+  date: string
+  beach_id: string
+  status: string
+  description?: string
+  registered_volunteers?: number
+  max_volunteers: number
+  beach?: Beach
+}
+
+const beaches: Beach[] = [
   { id: '1', name: 'Juhu Beach' },
   { id: '2', name: 'Versova Beach' },
   { id: '3', name: 'Dadar Chowpatty' },
@@ -12,8 +29,8 @@ const beaches = [
 ]
 
 function NgoEventsPage() {
-  const [events, setEvents] = useState([])
-  const [filteredEvents, setFilteredEvents] = useState([])
+  const [events, setEvents] = useState<Event[]>([])
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
@@ -48,7 +65,7 @@ function NgoEventsPage() {
       const storedEvents = JSON.parse(localStorage.getItem('tidewy_events') || '[]')
       
       // Add beach names to events
-      const eventsWithBeaches = storedEvents.map(event => ({
+      const eventsWithBeaches = storedEvents.map((event: Event) => ({
         ...event,
         beach: beaches.find(b => b.id === event.beach_id)
       }))

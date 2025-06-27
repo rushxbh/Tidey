@@ -12,7 +12,7 @@ function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
@@ -27,7 +27,7 @@ function LoginPage() {
         setError(result.error || 'Login failed. Please try again.')
       }
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.')
+      setError((err as Error).message || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

@@ -3,7 +3,25 @@ import { useNavigate } from 'react-router-dom'
 import { Calendar, MapPin, Clock, Users, Info, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
-const beaches = [
+interface Beach {
+  id: string
+  name: string
+}
+
+interface FormData {
+  title: string
+  description: string
+  date: string
+  start_time: string
+  beach_id: string
+  max_volunteers: number
+  meeting_point: string
+  equipment_provided: boolean
+  equipment_details: string
+  waste_categories: string[]
+}
+
+const beaches: Beach[] = [
   { id: '1', name: 'Juhu Beach' },
   { id: '2', name: 'Versova Beach' },
   { id: '3', name: 'Dadar Chowpatty' },
@@ -16,7 +34,7 @@ function NgoCreateEventPage() {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
     date: '',
@@ -29,15 +47,16 @@ function NgoCreateEventPage() {
     waste_categories: ['plastic', 'glass', 'metal', 'organic']
   })
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
+    const checked = (e.target as HTMLInputElement).checked
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
   }
 
-  const handleWasteCategoryChange = (category) => {
+  const handleWasteCategoryChange = (category: string) => {
     setFormData(prev => {
       const categories = [...prev.waste_categories]
       if (categories.includes(category)) {
@@ -54,7 +73,7 @@ function NgoCreateEventPage() {
     })
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
@@ -79,8 +98,8 @@ function NgoCreateEventPage() {
         description: formData.description,
         date: eventDateTime.toISOString(),
         beach_id: formData.beach_id,
-        ngo_id: user.id,
-        max_volunteers: parseInt(formData.max_volunteers),
+        ngo_id: user?.id,
+        max_volunteers: parseInt(formData.max_volunteers.toString()),
         meeting_point: formData.meeting_point,
         equipment_provided: formData.equipment_provided,
         equipment_details: formData.equipment_details,
@@ -99,7 +118,7 @@ function NgoCreateEventPage() {
       navigate('/ngo/events')
     } catch (error) {
       console.error('Error creating event:', error)
-      setError(error.message || 'Failed to create event')
+      setError((error as Error).message || 'Failed to create event')
       setIsLoading(false)
     }
   }

@@ -1,7 +1,11 @@
 import { Menu, Bell, Search } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
-function NgoHeader({ setSidebarOpen }) {
+interface NgoHeaderProps {
+  setSidebarOpen: (open: boolean) => void
+}
+
+function NgoHeader({ setSidebarOpen }: NgoHeaderProps) {
   const { user } = useAuth()
   
   return (
