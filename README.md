@@ -10,7 +10,12 @@
 Tidey provides a unified ecosystem where volunteers can discover nearby events, track their personal environmental contributions, and receive blockchain-verified recognition as proof of environment and impact. The platform combines real-time beach health monitoring with intelligent volunteer matching algorithms, ensuring optimal resource allocation and maximum environmental impact.
 
 ---
+## System Architecture
 
+Architecture diagram above for a high-level overview of Tidey's system workflow.
+![Tidey Architecture Diagram](Demo/ArchitecureDiagram.png)
+
+---
 ## Core Features
 
 ### 1. Beach Health Map System
@@ -43,12 +48,6 @@ Tidey provides a unified ecosystem where volunteers can discover nearby events, 
 
 ---
 
-## System Architecture
-
-Architecture diagram above for a high-level overview of Tidey's system workflow.
-![Tidey Architecture Diagram](Demo/ArchitecureDiagram.png)
-
----
 
 ## Get Involved
 
