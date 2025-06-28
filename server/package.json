@@ -1,0 +1,56 @@
+{
+  "name": "tidewy-server",
+  "version": "1.0.0",
+  "description": "Backend server for Tidewy - Beach cleanup volunteer platform",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "lint": "eslint src --ext .ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "express-validator": "^7.0.1",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.7",
+    "express-rate-limit": "^7.1.5",
+    "compression": "^1.7.4",
+    "dotenv": "^16.3.1",
+    "mongoose": "^8.0.3",
+    "mongodb-memory-server": "^9.1.3",
+    "qrcode": "^1.5.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.10",
+    "@types/express": "^4.17.20",
+    "@types/cors": "^2.8.15",
+    "@types/morgan": "^1.9.7",
+    "@types/bcryptjs": "^2.4.5",
+    "@types/jsonwebtoken": "^9.0.4",
+    "@types/multer": "^1.4.9",
+    "@types/nodemailer": "^6.4.13",
+    "@types/compression": "^1.7.4",
+    "@types/qrcode": "^1.5.5",
+    "@typescript-eslint/eslint-plugin": "^6.9.1",
+    "@typescript-eslint/parser": "^6.9.1",
+    "eslint": "^8.52.0",
+    "jest": "^29.7.0",
+    "tsx": "^4.1.2",
+    "typescript": "^5.2.2"
+  },
+  "keywords": [
+    "beach-cleanup",
+    "volunteer",
+    "environmental",
+    "sustainability"
+  ],
+  "author": "Tidewy Team",
+  "license": "MIT"
+}

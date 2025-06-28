@@ -1,0 +1,23 @@
+{
+  "name": "tidewy-platform",
+  "version": "1.0.0",
+  "description": "Beach cleanup platform with volunteer management and gamification",
+  "scripts": {
+    "dev": "concurrently \"npm run client:dev\" \"npm run server:dev\"",
+    "client:dev": "cd client && npm run dev",
+    "server:dev": "cd server && npm run dev",
+    "client:build": "cd client && npm run build",
+    "server:build": "cd server && npm run build",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "start": "concurrently \"npm run client:start\" \"npm run server:start\"",
+    "client:start": "cd client && npm run preview",
+    "server:start": "cd server && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ]
+}
