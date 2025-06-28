@@ -1,22 +1,19 @@
 # Tidey
 
-![Tidey Architecture Diagram](Demo/ArchitecureDiagram.png)
-
-## Executive Summary
+## About This Project
 
 **Tidey** is a blockchain-powered, gamified platform for beach conservation. It transforms beach cleanup initiatives through technology-driven engagement and transparent impact tracking, serving as a central hub that connects environmental volunteers, NGOs, and coastal communities. Tidey coordinates large-scale cleanup efforts and addresses the fragmentation in current sustainability initiatives.
 
 
 
-## Proposed Solution
-
+## Our Approach
 Tidey provides a unified ecosystem where volunteers can discover nearby events, track their personal environmental contributions, and receive blockchain-verified recognition as proof of environment and impact. The platform combines real-time beach health monitoring with intelligent volunteer matching algorithms, ensuring optimal resource allocation and maximum environmental impact.
 
 ---
 
 ## Core Features
 
-### 1. Health Map System
+### 1. Beach Health Map System
 - Visual representation of beach cleanliness levels (0-100 rating scale)
 - Color-coded mapping to prioritize cleanup efforts based on pollution severity
 - Real-time updates based on volunteer contributions and waste data
@@ -48,7 +45,8 @@ Tidey provides a unified ecosystem where volunteers can discover nearby events, 
 
 ## System Architecture
 
-See the architecture diagram above for a high-level overview of Tidey's system workflow.
+Architecture diagram above for a high-level overview of Tidey's system workflow.
+![Tidey Architecture Diagram](Demo/ArchitecureDiagram.png)
 
 ---
 
