@@ -16,6 +16,6 @@ const LockModule = buildModule("LockModule", (m) => {
   });
 
   return { lock };
-});
+}); 
 
 export default LockModule;
