@@ -11,7 +11,7 @@ A comprehensive full-stack web application for organizing and managing beach cle
 - **Gamification**: Earn AquaCoins and unlock achievements
 - **Rewards Store**: Redeem coins for merchandise and experiences
 - **Profile Management**: Track progress and view statistics
-
+   
 ### For NGOs
 - **Event Management**: Create, update, and manage cleanup events
 - **Volunteer Coordination**: Track registrations and attendance
