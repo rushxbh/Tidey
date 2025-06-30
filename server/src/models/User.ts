@@ -46,7 +46,8 @@ const userSchema = new Schema<IUser>({
   password: {
     type: String,
     required: true,
-    minlength: 6
+    minlength: 6,
+    select: false
   },
   role: {
     type: String,
@@ -128,10 +129,17 @@ userSchema.pre('save', async function(next) {
   }
 });
 
+console.log('User password:', user.password);
+console.log('comparePassword type:', typeof user.comparePassword);
+
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+userSchema.methods.comparePassword = async function (
+  this: IUser,
+  candidatePassword: string
+): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
+
 
 // Remove password from JSON output
 userSchema.methods.toJSON = function() {

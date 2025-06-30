@@ -10,7 +10,8 @@ import {
   Building2, 
   LogOut,
   Menu,
-  X
+  X,
+  Trophy
 } from 'lucide-react';
 
 const Layout: React.FC = () => {
@@ -31,6 +32,7 @@ const Layout: React.FC = () => {
   const volunteerNavItems = [
     { icon: Home, label: 'Dashboard', path: '/volunteer/dashboard' },
     { icon: Calendar, label: 'Events', path: '/volunteer/events' },
+    { icon: Trophy, label: 'Achievements', path: '/volunteer/achievements' },
     { icon: Gift, label: 'Rewards', path: '/volunteer/rewards' },
     { icon: User, label: 'Profile', path: '/volunteer/profile' },
   ];

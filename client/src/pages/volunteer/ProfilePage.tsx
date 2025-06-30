@@ -1,39 +1,104 @@
-import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, Trophy, Coins, Camera } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Mail, Phone, MapPin, Calendar, Coins, Camera } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
+
+interface UserStats {
+  eventsJoined: number;
+  totalHours: number;
+  aquaCoins: number;
+  achievements: number;
+}
 
 const ProfilePage: React.FC = () => {
+  const { user} = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    location: 'Los Angeles, CA',
-    joinDate: '2023-06-15',
-    bio: 'Passionate about ocean conservation and making a positive impact on our beaches.'
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    location: user?.location || '',
+    bio: user?.bio || ''
   });
+  const [userStats, setUserStats] = useState<UserStats>({
+    eventsJoined: 0,
+    totalHours: 0,
+    aquaCoins: 0,
+    achievements: 0
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const stats = {
-    eventsJoined: 12,
-    hoursVolunteered: 48,
-    aquaCoins: 1250,
-    achievements: 8,
-    wasteCollected: '125 kg',
-    beachesHelped: 8
+  useEffect(() => {
+    fetchUserStats();
+    if (user) {
+      setProfile({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        location: user.location || '',
+        bio: user.bio || ''
+      });
+    }
+  }, [user]);
+
+  const fetchUserStats = async () => {
+    try {
+      const response = await axios.get('/api/users/stats');
+      setUserStats(response.data);
+    } catch (err: any) {
+      console.error('Error fetching user stats:', err);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      setSuccess('');
+
+      await axios.put('/api/auth/profile', profile);
+      
+      setSuccess('Profile updated successfully!');
+      setIsEditing(false);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      setError(err.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setProfile(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const achievements = [
-    { name: 'First Cleanup', description: 'Completed your first beach cleanup', icon: '🏆', earned: true },
-    { name: 'Team Player', description: 'Joined 5 team cleanup events', icon: '👥', earned: true },
-    { name: 'Ocean Guardian', description: 'Collected 50kg of waste', icon: '🌊', earned: true },
-    { name: 'Early Bird', description: 'Joined 3 morning cleanups', icon: '🌅', earned: true },
-    { name: 'Weekend Warrior', description: 'Participated in 10 weekend events', icon: '⚡', earned: false },
-    { name: 'Eco Champion', description: 'Collected 100kg of waste', icon: '♻️', earned: false }
+    { name: 'First Cleanup', description: 'Completed your first beach cleanup', icon: '🏆', earned: userStats.eventsJoined > 0 },
+    { name: 'Team Player', description: 'Joined 5 team cleanup events', icon: '👥', earned: userStats.eventsJoined >= 5 },
+    { name: 'Ocean Guardian', description: 'Volunteered for 20+ hours', icon: '🌊', earned: userStats.totalHours >= 20 },
+    { name: 'Early Bird', description: 'Earned 500+ AquaCoins', icon: '🌅', earned: userStats.aquaCoins >= 500 },
+    { name: 'Weekend Warrior', description: 'Participated in 10 events', icon: '⚡', earned: userStats.eventsJoined >= 10 },
+    { name: 'Eco Champion', description: 'Volunteered for 50+ hours', icon: '♻️', earned: userStats.totalHours >= 50 }
   ];
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Save profile logic here
-  };
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to view your profile.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -41,11 +106,24 @@ const ProfilePage: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
         <button
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className="btn-primary"
+          disabled={loading}
+          className="btn-primary disabled:opacity-50"
         >
-          {isEditing ? 'Save Changes' : 'Edit Profile'}
+          {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Edit Profile'}
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">{error}</p>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-green-600">{success}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Info */}
@@ -54,18 +132,26 @@ const ProfilePage: React.FC = () => {
             <div className="flex items-center space-x-6 mb-6">
               <div className="relative">
                 <div className="h-24 w-24 bg-primary-100 rounded-full flex items-center justify-center">
-                  <User className="h-12 w-12 text-primary-600" />
+                  {user.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={user.name}
+                      className="h-24 w-24 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-12 w-12 text-primary-600" />
+                  )}
                 </div>
                 <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50">
                   <Camera className="h-4 w-4 text-gray-600" />
                 </button>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
                 <p className="text-gray-600">Volunteer</p>
                 <div className="flex items-center mt-2">
                   <Coins className="h-4 w-4 text-ocean-600 mr-1" />
-                  <span className="text-ocean-600 font-semibold">{stats.aquaCoins} AquaCoins</span>
+                  <span className="text-ocean-600 font-semibold">{userStats.aquaCoins} AquaCoins</span>
                 </div>
               </div>
             </div>
@@ -77,8 +163,9 @@ const ProfilePage: React.FC = () => {
                   {isEditing ? (
                     <input
                       type="text"
+                      name="name"
                       value={profile.name}
-                      onChange={(e) => setProfile({...profile, name: e.target.value})}
+                      onChange={handleInputChange}
                       className="input-field"
                     />
                   ) : (
@@ -91,19 +178,10 @@ const ProfilePage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      value={profile.email}
-                      onChange={(e) => setProfile({...profile, email: e.target.value})}
-                      className="input-field"
-                    />
-                  ) : (
-                    <div className="flex items-center">
-                      <Mail className="h-4 w-4 text-gray-400 mr-2" />
-                      <span>{profile.email}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center">
+                    <Mail className="h-4 w-4 text-gray-400 mr-2" />
+                    <span>{profile.email}</span>
+                  </div>
                 </div>
 
                 <div>
@@ -111,14 +189,16 @@ const ProfilePage: React.FC = () => {
                   {isEditing ? (
                     <input
                       type="tel"
+                      name="phone"
                       value={profile.phone}
-                      onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                      onChange={handleInputChange}
                       className="input-field"
+                      placeholder="Enter phone number"
                     />
                   ) : (
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 text-gray-400 mr-2" />
-                      <span>{profile.phone}</span>
+                      <span>{profile.phone || 'Not provided'}</span>
                     </div>
                   )}
                 </div>
@@ -128,14 +208,16 @@ const ProfilePage: React.FC = () => {
                   {isEditing ? (
                     <input
                       type="text"
+                      name="location"
                       value={profile.location}
-                      onChange={(e) => setProfile({...profile, location: e.target.value})}
+                      onChange={handleInputChange}
                       className="input-field"
+                      placeholder="Enter your location"
                     />
                   ) : (
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 text-gray-400 mr-2" />
-                      <span>{profile.location}</span>
+                      <span>{profile.location || 'Not provided'}</span>
                     </div>
                   )}
                 </div>
@@ -145,20 +227,25 @@ const ProfilePage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
                 {isEditing ? (
                   <textarea
+                    name="bio"
                     value={profile.bio}
-                    onChange={(e) => setProfile({...profile, bio: e.target.value})}
+                    onChange={handleInputChange}
                     className="input-field"
                     rows={3}
+                    placeholder="Tell us about yourself..."
                   />
                 ) : (
-                  <p className="text-gray-600">{profile.bio}</p>
+                  <p className="text-gray-600">{profile.bio || 'No bio provided'}</p>
                 )}
               </div>
 
-              <div className="flex items-center text-sm text-gray-600">
-                <Calendar className="h-4 w-4 mr-2" />
-                <span>Joined {new Date(profile.joinDate).toLocaleDateString()}</span>
-              </div>
+              {user.createdAt && (
+  <div className="flex items-center text-sm text-gray-600">
+    <Calendar className="h-4 w-4 mr-2" />
+    <span>Joined {new Date(user.createdAt).toLocaleDateString()}</span>
+  </div>
+)}
+
             </div>
           </div>
 
@@ -180,6 +267,9 @@ const ProfilePage: React.FC = () => {
                     <div>
                       <h4 className="font-semibold text-gray-900">{achievement.name}</h4>
                       <p className="text-sm text-gray-600">{achievement.description}</p>
+                      {achievement.earned && (
+                        <span className="text-xs text-green-600 font-medium">✓ Earned</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -195,23 +285,19 @@ const ProfilePage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Events Joined</span>
-                <span className="font-semibold text-gray-900">{stats.eventsJoined}</span>
+                <span className="font-semibold text-gray-900">{userStats.eventsJoined}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Hours Volunteered</span>
-                <span className="font-semibold text-gray-900">{stats.hoursVolunteered}</span>
+                <span className="font-semibold text-gray-900">{userStats.totalHours}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Waste Collected</span>
-                <span className="font-semibold text-gray-900">{stats.wasteCollected}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Beaches Helped</span>
-                <span className="font-semibold text-gray-900">{stats.beachesHelped}</span>
+                <span className="text-gray-600">AquaCoins Earned</span>
+                <span className="font-semibold text-gray-900">{userStats.aquaCoins}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Achievements</span>
-                <span className="font-semibold text-gray-900">{stats.achievements}</span>
+                <span className="font-semibold text-gray-900">{achievements.filter(a => a.earned).length}</span>
               </div>
             </div>
           </div>
@@ -221,7 +307,7 @@ const ProfilePage: React.FC = () => {
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
                 <Coins className="h-8 w-8 text-ocean-600 mr-2" />
-                <span className="text-3xl font-bold text-ocean-600">{stats.aquaCoins}</span>
+                <span className="text-3xl font-bold text-ocean-600">{userStats.aquaCoins}</span>
               </div>
               <p className="text-sm text-gray-600 mb-4">Available for rewards</p>
               <button className="w-full btn-primary">

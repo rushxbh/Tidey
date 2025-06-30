@@ -1,8 +1,13 @@
+import dotenv from 'dotenv';
+
+// Load environment variables first, before any other imports
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
+import path from 'path';
 import { connectDB } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -11,8 +16,10 @@ import authRoutes from './routes/auth';
 import eventRoutes from './routes/events';
 import userRoutes from './routes/users';
 import rewardRoutes from './routes/rewards';
-
-dotenv.config();
+import achievementRoutes from './routes/achievements';
+import certificateRoutes from './routes/certificates';
+import eventImageRoutes from './routes/eventImages';
+import qrRoutes from './routes/qr';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -38,11 +45,18 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/rewards', rewardRoutes);
+app.use('/api/achievements', achievementRoutes);
+app.use('/api/certificates', certificateRoutes);
+app.use('/api/event-images', eventImageRoutes);
+app.use('/api/qr', qrRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

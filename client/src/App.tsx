@@ -8,7 +8,11 @@ import VolunteerDashboard from './pages/volunteer/Dashboard';
 import VolunteerEvents from './pages/volunteer/EventsPage';
 import VolunteerProfile from './pages/volunteer/ProfilePage';
 import VolunteerRewards from './pages/volunteer/RewardsPage';
+import VolunteerAchievements from './pages/volunteer/AchievementsPage';
 import NGODashboard from './pages/ngo/Dashboard';
+import NGOEvents from './pages/ngo/EventsPage';
+import NGOVolunteers from './pages/ngo/VolunteersPage';
+import EditEventPage from './pages/ngo/EditEventPage';
 
 function App() {
   return (
@@ -23,11 +27,15 @@ function App() {
             <Route path="volunteer/events" element={<VolunteerEvents />} />
             <Route path="volunteer/profile" element={<VolunteerProfile />} />
             <Route path="volunteer/rewards" element={<VolunteerRewards />} />
+            <Route path="volunteer/achievements" element={<VolunteerAchievements />} />
             <Route path="ngo/dashboard" element={<NGODashboard />} />
+            <Route path="ngo/events" element={<NGOEvents />} />
+            <Route path="ngo/events/:id/edit" element={<EditEventPage />} />
+            <Route path="ngo/volunteers" element={<NGOVolunteers />} />
           </Route>
         </Routes>
       </Router>
-    </AuthProvider> 
+    </AuthProvider>
   );
 }
 

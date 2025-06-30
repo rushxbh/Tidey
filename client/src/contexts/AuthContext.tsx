@@ -6,8 +6,13 @@ interface User {
   email: string;
   name: string;
   role: 'volunteer' | 'ngo';
+  organizationName?: string;
   aquaCoins?: number;
   profilePicture?: string;
+   phone?: string;
+  location?: string;
+  bio?: string;
+  createdAt?: string;
 }
 
 interface AuthContextType {

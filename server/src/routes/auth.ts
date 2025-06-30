@@ -63,9 +63,10 @@ router.post('/register', [
 
     const user = new User(userData)
     await user.save()
-
+    console.log('JWT_SECRET:', process.env.JWT_SECRET);
     // Generate token
     const token = sign(
+      
   { userId: user._id },
   process.env.JWT_SECRET || 'fallback-secret-key',
   {
@@ -95,59 +96,56 @@ router.post('/login', [
   body('password').notEmpty().withMessage('Password is required')
 ], async (req: express.Request, res: express.Response) => {
   try {
-    const errors = validationResult(req)
+    console.log('LOGIN ATTEMPT:', req.body); // Log incoming payload
+
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation failed:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
         errors: errors.array()
-      })
+      });
     }
 
-    const { email, password } = req.body
+    const { email, password } = req.body;
 
-    // Find user and include password for comparison
-    const user = await User.findOne({ email }).select('+password')
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      })
+      console.log('User not found');
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Check password
-    const isPasswordValid = await user.comparePassword(password)
+    const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      })
+      console.log('Password mismatch');
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Generate token
-   const token = sign(
-  { userId: user._id },
-  process.env.JWT_SECRET || 'fallback-secret-key',
-  {
-    expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as SignOptions['expiresIn']
-  }
-);
+    const token = sign(
+      { userId: user._id },
+      process.env.JWT_SECRET || 'fallback-secret-key',
+      {
+        expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as SignOptions['expiresIn']
+      }
+    );
 
-
-    res.json({
+    console.log('Login successful:', user.email);
+    return res.json({
       success: true,
       message: 'Login successful',
       token,
       user: user.toJSON()
-    })
+    });
   } catch (error) {
-    console.error('Login error:', error)
-    res.status(500).json({
+    console.error('Login error:', error);
+    return res.status(500).json({
       success: false,
       message: 'Server error during login'
-    })
+    });
   }
-})
+});
+
 
 // Get current user
 router.get('/me', authenticate, async (req: AuthRequest, res: express.Response) => {
