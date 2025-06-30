@@ -15,9 +15,12 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
-  },  
+  },
   "workspaces": [
     "client",
     "server"
-  ]
+  ],
+  "dependencies": {
+    "mongod": "^2.0.0"
+  }
 }

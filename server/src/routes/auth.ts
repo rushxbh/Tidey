@@ -152,10 +152,7 @@ router.post('/login', [
 // Get current user
 router.get('/me', authenticate, async (req: AuthRequest, res: express.Response) => {
   try {
-    res.json({
-      success: true,
-      user: req.user
-    })
+    res.json(req.user)
   } catch (error) {
     console.error('Get user error:', error)
     res.status(500).json({
