@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, Coins, Trophy, TrendingUp } from 'lucide-react';
+import { Calendar, MapPin, Users, Coins, Trophy, TrendingUp, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -24,6 +24,12 @@ interface UserStats {
   achievements: number;
 }
 
+interface BeachHealthData {
+  location: string;
+  score: number;
+  lastUpdated: string;
+}
+
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
@@ -33,6 +39,7 @@ const Dashboard: React.FC = () => {
     aquaCoins: 0,
     achievements: 0
   });
+  const [beachHealthData, setBeachHealthData] = useState<BeachHealthData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -52,6 +59,15 @@ const Dashboard: React.FC = () => {
       const statsResponse = await axios.get('/api/users/stats');
       setUserStats(statsResponse.data);
 
+      // Fetch beach health data
+      const beachHealthResponse = await axios.get('/api/beach-health/latest');
+      setBeachHealthData(beachHealthResponse.data.beaches || [
+        { location: "Juhu Beach", score: 78, lastUpdated: "2 hours ago" },
+        { location: "Marine Drive", score: 85, lastUpdated: "4 hours ago" },
+        { location: "Versova Beach", score: 72, lastUpdated: "1 day ago" },
+        { location: "Chowpatty Beach", score: 68, lastUpdated: "6 hours ago" },
+      ]);
+
     } catch (err: any) {
       console.error('Error fetching dashboard data:', err);
       setError('Failed to load dashboard data');
@@ -65,11 +81,47 @@ const Dashboard: React.FC = () => {
       await axios.post(`/api/events/${eventId}/register`);
       // Refresh events after joining
       fetchDashboardData();
-      alert('Successfully registered for event!');
+      showSuccessNotification('Successfully registered for event!');
     } catch (err: any) {
       console.error('Error joining event:', err);
-      alert(err.response?.data?.message || 'Failed to join event');
+      showErrorNotification(err.response?.data?.message || 'Failed to join event');
     }
+  };
+
+  const showSuccessNotification = (message: string) => {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    notification.innerHTML = `
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 3000);
+  };
+
+  const showErrorNotification = (message: string) => {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    notification.innerHTML = `
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 3000);
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600 bg-green-100';
+    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
+    return 'text-red-600 bg-red-100';
   };
 
   if (loading) {
@@ -147,6 +199,37 @@ const Dashboard: React.FC = () => {
               <p className="text-2xl font-bold text-gray-900">{userStats.aquaCoins}</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Beach Health Index */}
+      <div className="card">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Beach Health Index</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {beachHealthData.map((beach, index) => (
+            <div key={index} className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-gray-900">{beach.location}</h3>
+                <BarChart3 className="h-5 w-5 text-gray-400" />
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-600">Health Score</span>
+                <span className={`px-2 py-1 rounded-full text-sm font-medium ${getScoreColor(beach.score)}`}>
+                  {beach.score}/100
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full ${
+                    beach.score >= 80 ? 'bg-green-500' :
+                    beach.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${beach.score}%` }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Updated {beach.lastUpdated}</p>
+            </div>
+          ))}
         </div>
       </div>
 

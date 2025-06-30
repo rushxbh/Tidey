@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Waves, Mail, Lock, User, Building2, Eye, EyeOff } from 'lucide-react';
@@ -18,8 +18,16 @@ const RegisterPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { register } = useAuth();
+  const { register, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      const redirectPath = user.role === 'volunteer' ? '/volunteer/dashboard' : '/ngo/dashboard';
+      navigate(redirectPath, { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -41,7 +49,7 @@ const RegisterPage: React.FC = () => {
 
     try {
       await register(formData);
-      navigate('/');
+      // The useEffect above will handle the redirect once user is set
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {

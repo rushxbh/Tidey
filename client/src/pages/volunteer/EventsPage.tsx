@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, Clock, Filter, QrCode, Camera, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Filter, QrCode, Camera, CheckCircle, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -13,6 +13,10 @@ interface Event {
   location: {
     name: string;
     address: string;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
   };
   currentParticipants: number;
   maxParticipants: number;
@@ -91,10 +95,11 @@ const EventsPage: React.FC = () => {
       await axios.post(`/api/events/${eventId}/register`);
       fetchEvents();
       fetchUserAttendances();
-      alert('Successfully registered for event!');
+      // Show success notification instead of alert
+      showSuccessNotification('Successfully registered for event!');
     } catch (err: any) {
       console.error('Error joining event:', err);
-      alert(err.response?.data?.message || 'Failed to join event');
+      showErrorNotification(err.response?.data?.message || 'Failed to join event');
     }
   };
 
@@ -107,34 +112,71 @@ const EventsPage: React.FC = () => {
       await axios.delete(`/api/events/${eventId}/register`);
       fetchEvents();
       fetchUserAttendances();
-      alert('Successfully unregistered from event!');
+      showSuccessNotification('Successfully unregistered from event!');
     } catch (err: any) {
       console.error('Error unregistering:', err);
-      alert(err.response?.data?.message || 'Failed to unregister');
+      showErrorNotification(err.response?.data?.message || 'Failed to unregister');
     }
   };
 
   const handleQRScan = async (qrData: string) => {
     try {
       const response = await axios.post('/api/qr/scan', { qrData });
-      alert(response.data.message);
+      showSuccessNotification(response.data.message);
       fetchUserAttendances();
       setShowQRScanner(false);
     } catch (err: any) {
       console.error('Error scanning QR:', err);
-      alert(err.response?.data?.message || 'Failed to scan QR code');
+      showErrorNotification(err.response?.data?.message || 'Failed to scan QR code');
     }
   };
 
   const handleCheckOut = async (eventId: string) => {
     try {
       const response = await axios.post(`/api/qr/checkout/${eventId}`);
-      alert(`${response.data.message}. Hours worked: ${response.data.hoursWorked || 0}`);
+      showSuccessNotification(`${response.data.message}. Hours worked: ${response.data.hoursWorked || 0}`);
       fetchUserAttendances();
     } catch (err: any) {
       console.error('Error checking out:', err);
-      alert(err.response?.data?.message || 'Failed to check out');
+      showErrorNotification(err.response?.data?.message || 'Failed to check out');
     }
+  };
+
+  const showSuccessNotification = (message: string) => {
+    // Create and show success notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    notification.innerHTML = `
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 3000);
+  };
+
+  const showErrorNotification = (message: string) => {
+    // Create and show error notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    notification.innerHTML = `
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 3000);
+  };
+
+  const getGoogleMapsUrl = (location: Event['location']) => {
+    const { latitude, longitude } = location.coordinates;
+    return `https://www.google.com/maps?q=${latitude},${longitude}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -328,7 +370,15 @@ const EventsPage: React.FC = () => {
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-2" />
-                      {event.location.name}
+                      <a
+                        href={getGoogleMapsUrl(event.location)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:text-primary-700 flex items-center"
+                      >
+                        {event.location.name}
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </a>
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <Users className="h-4 w-4 mr-2" />
@@ -403,7 +453,7 @@ const EventsPage: React.FC = () => {
           onClose={() => setSelectedEventForUpload(null)}
           onSuccess={() => {
             setSelectedEventForUpload(null);
-            // Refresh user data to show updated coins
+            showSuccessNotification('Images uploaded successfully! You earned 25 AquaCoins!');
           }}
         />
       )}
@@ -509,7 +559,6 @@ const ImageUploadModal: React.FC<{
       // Submit for approval and coin reward
       await axios.post(`/api/event-images/submit/${eventId}`);
       
-      alert('Images uploaded successfully! You have been awarded 25 AquaCoins!');
       onSuccess();
     } catch (err: any) {
       console.error('Error uploading images:', err);

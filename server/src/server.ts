@@ -20,6 +20,7 @@ import achievementRoutes from './routes/achievements';
 import certificateRoutes from './routes/certificates';
 import eventImageRoutes from './routes/eventImages';
 import qrRoutes from './routes/qr';
+import beachHealthRoutes from './routes/beachHealth';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -57,6 +58,7 @@ app.use('/api/achievements', achievementRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/event-images', eventImageRoutes);
 app.use('/api/qr', qrRoutes);
+app.use('/api/beach-health', beachHealthRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

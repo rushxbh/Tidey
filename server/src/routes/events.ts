@@ -3,7 +3,7 @@ import { body, query, validationResult } from 'express-validator';
 import Event, { IEvent } from '../models/Event';
 import User, { IUser } from '../models/User';
 import Attendance from '../models/Attendance';
-import { authenticateToken , requireRole, AuthRequest } from '../middleware/auth';
+import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
@@ -110,14 +110,31 @@ router.post('/', authenticateToken, requireRole(['ngo']), [
     });
   }
 
-  // Validate that event date is in the future
+  // Validate that event date is not in the past (allow same day with future time)
   const eventDate = new Date(req.body.date);
   const now = new Date();
-  if (eventDate <= now) {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+  
+  if (eventDay < today) {
     return res.status(400).json({
       success: false,
-      message: 'Event date must be in the future'
+      message: 'Event date cannot be in the past'
     });
+  }
+
+  // If it's today, check if start time is in the future
+  if (eventDay.getTime() === today.getTime()) {
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const [startHour, startMinute] = req.body.startTime.split(':').map(Number);
+    const eventStartTime = startHour * 60 + startMinute;
+    
+    if (eventStartTime <= currentTime) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event start time must be in the future for same-day events'
+      });
+    }
   }
 
   // Validate that end time is after start time
@@ -175,7 +192,7 @@ router.put('/:id', authenticateToken, requireRole(['ngo']), [
   if (!event) {
     return res.status(404).json({ 
       success: false,
-      message: 'Event not found or unauthorized' 
+      message: 'Event not found or unrequireRoled' 
     });
   }
 
@@ -258,7 +275,7 @@ router.delete('/:id', authenticateToken, requireRole(['ngo']), asyncHandler(asyn
   if (!event) {
     return res.status(404).json({ 
       success: false,
-      message: 'Event not found or unauthorized' 
+      message: 'Event not found or unrequireRoled' 
     });
   }
 
@@ -404,7 +421,7 @@ router.get('/:id/participants', authenticateToken, requireRole(['ngo']), asyncHa
   if (!event) {
     return res.status(404).json({ 
       success: false,
-      message: 'Event not found or unauthorized' 
+      message: 'Event not found or unrequireRoled' 
     });
   }
 
@@ -429,7 +446,7 @@ router.post('/:id/checkin/:volunteerId', authenticateToken, requireRole(['ngo'])
   if (!event) {
     return res.status(404).json({ 
       success: false,
-      message: 'Event not found or unauthorized' 
+      message: 'Event not found or unrequireRoled' 
     });
   }
 
@@ -480,7 +497,7 @@ router.post('/:id/checkout/:volunteerId', authenticateToken, requireRole(['ngo']
   if (!event) {
     return res.status(404).json({ 
       success: false,
-      message: 'Event not found or unauthorized' 
+      message: 'Event not found or unrequireRoled' 
     });
   }
 

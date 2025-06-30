@@ -129,8 +129,8 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-console.log('User password:', user.password);
-console.log('comparePassword type:', typeof user.comparePassword);
+// console.log('User password:', user?.password);
+// console.log('comparePassword type:', typeof user?.comparePassword);
 
 // Compare password method
 userSchema.methods.comparePassword = async function (

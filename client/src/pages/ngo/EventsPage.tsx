@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, Clock, Filter, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Filter, Plus, Edit, Trash2, Eye, QrCode, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -42,6 +42,7 @@ const EventsPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [showQRCode, setShowQRCode] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -84,10 +85,10 @@ const EventsPage: React.FC = () => {
     try {
       await axios.delete(`/api/events/${eventId}`);
       fetchEvents(); // Refresh events
-      alert('Event deleted successfully');
+      showSuccessNotification('Event deleted successfully');
     } catch (err: any) {
       console.error('Error deleting event:', err);
-      alert(err.response?.data?.message || 'Failed to delete event');
+      showErrorNotification(err.response?.data?.message || 'Failed to delete event');
     }
   };
 
@@ -95,11 +96,56 @@ const EventsPage: React.FC = () => {
     try {
       await axios.put(`/api/events/${eventId}`, { status: newStatus });
       fetchEvents(); // Refresh events
-      alert('Event status updated successfully');
+      showSuccessNotification('Event status updated successfully');
     } catch (err: any) {
       console.error('Error updating event status:', err);
-      alert(err.response?.data?.message || 'Failed to update event status');
+      showErrorNotification(err.response?.data?.message || 'Failed to update event status');
     }
+  };
+
+  const generateQRCode = async (eventId: string) => {
+    try {
+      const response = await axios.get(`/api/qr/generate/${eventId}`);
+      setShowQRCode(response.data.qrCode);
+    } catch (err: any) {
+      console.error('Error generating QR code:', err);
+      showErrorNotification('Failed to generate QR code');
+    }
+  };
+
+  const showSuccessNotification = (message: string) => {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    notification.innerHTML = `
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 3000);
+  };
+
+  const showErrorNotification = (message: string) => {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    notification.innerHTML = `
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 3000);
+  };
+
+  const getGoogleMapsUrl = (location: Event['location']) => {
+    const { latitude, longitude } = location.coordinates;
+    return `https://www.google.com/maps?q=${latitude},${longitude}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -138,7 +184,7 @@ const EventsPage: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900">Manage Events</h1>
         <button 
           onClick={() => setShowCreateModal(true)}
-          className="btn-primary"
+          className="btn-primary inline-flex items-center"
         >
           <Plus className="h-5 w-5 mr-2" />
           Create Event
@@ -179,7 +225,7 @@ const EventsPage: React.FC = () => {
           <p className="text-gray-600 mb-4">Create your first beach cleanup event to get started.</p>
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary"
+            className="btn-primary inline-flex items-center"
           >
             <Plus className="h-5 w-5 mr-2" />
             Create Event
@@ -241,7 +287,15 @@ const EventsPage: React.FC = () => {
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-2" />
-                      {event.location.name}
+                      <a
+                        href={getGoogleMapsUrl(event.location)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:text-primary-700 flex items-center"
+                      >
+                        {event.location.name}
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </a>
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <Users className="h-4 w-4 mr-2" />
@@ -275,12 +329,21 @@ const EventsPage: React.FC = () => {
                       </>
                     )}
                     {event.status === 'ongoing' && (
-                      <button
-                        onClick={() => handleUpdateEventStatus(event._id, 'completed')}
-                        className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg text-sm font-medium"
-                      >
-                        Complete Event
-                      </button>
+                      <>
+                        <button
+                          onClick={() => generateQRCode(event._id)}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center"
+                        >
+                          <QrCode className="h-4 w-4 mr-1" />
+                          QR Code
+                        </button>
+                        <button
+                          onClick={() => handleUpdateEventStatus(event._id, 'completed')}
+                          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                        >
+                          Complete
+                        </button>
+                      </>
                     )}
                     {(event.status === 'completed' || event.status === 'cancelled') && (
                       <div className="w-full text-center py-2 text-sm text-gray-500">
@@ -357,6 +420,7 @@ const EventsPage: React.FC = () => {
           onSuccess={() => {
             setShowCreateModal(false);
             fetchEvents();
+            showSuccessNotification('Event created successfully!');
           }}
         />
       )}
@@ -368,6 +432,36 @@ const EventsPage: React.FC = () => {
           onClose={() => setSelectedEvent(null)}
         />
       )}
+
+      {/* QR Code Modal */}
+      {showQRCode && (
+        <QRCodeModal 
+          qrCode={showQRCode}
+          onClose={() => setShowQRCode(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+// QR Code Modal Component
+const QRCodeModal: React.FC<{ qrCode: string; onClose: () => void }> = ({ qrCode, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 text-center">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Event Check-in QR Code</h2>
+        <p className="text-gray-600 mb-6">
+          Show this QR code to volunteers for check-in
+        </p>
+        
+        <div className="mb-6">
+          <img src={qrCode} alt="QR Code" className="mx-auto" />
+        </div>
+        
+        <button onClick={onClose} className="btn-primary w-full">
+          Close
+        </button>
+      </div>
     </div>
   );
 };
@@ -396,6 +490,23 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
     setLoading(true);
     setError('');
 
+    // Validate same-day events with future time
+    const eventDate = new Date(formData.date);
+    const today = new Date();
+    const isToday = eventDate.toDateString() === today.toDateString();
+    
+    if (isToday) {
+      const currentTime = today.getHours() * 60 + today.getMinutes();
+      const [startHour, startMinute] = formData.startTime.split(':').map(Number);
+      const eventStartTime = startHour * 60 + startMinute;
+      
+      if (eventStartTime <= currentTime) {
+        setError('Event start time must be in the future for same-day events');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const eventData = {
         title: formData.title,
@@ -418,7 +529,6 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
 
       await axios.post('/api/events', eventData);
       onSuccess();
-      alert('Event created successfully!');
     } catch (err: any) {
       console.error('Error creating event:', err);
       setError(err.response?.data?.message || 'Failed to create event');
@@ -431,6 +541,9 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -536,7 +649,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   value={formData.date}
                   onChange={handleInputChange}
                   className="input-field"
-                  min={new Date().toISOString().split('T')[0]}
+                  min={today}
                   required
                 />
               </div>

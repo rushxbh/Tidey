@@ -9,6 +9,126 @@ import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
 
+// Seed achievements data
+const seedAchievements = async () => {
+  const achievementsData = [
+    {
+      name: 'First Steps',
+      description: 'Complete your first beach cleanup event',
+      icon: '🏆',
+      category: 'participation',
+      criteria: { type: 'events_joined', value: 1, operator: 'gte' },
+      reward: { aquaCoins: 50 },
+      rarity: 'common'
+    },
+    {
+      name: 'Team Player',
+      description: 'Participate in 5 beach cleanup events',
+      icon: '👥',
+      category: 'participation',
+      criteria: { type: 'events_joined', value: 5, operator: 'gte' },
+      reward: { aquaCoins: 150 },
+      rarity: 'rare'
+    },
+    {
+      name: 'Ocean Guardian',
+      description: 'Volunteer for 20+ hours in beach cleanups',
+      icon: '🌊',
+      category: 'impact',
+      criteria: { type: 'hours_volunteered', value: 20, operator: 'gte' },
+      reward: { aquaCoins: 200 },
+      rarity: 'rare'
+    },
+    {
+      name: 'Eco Warrior',
+      description: 'Complete 10 beach cleanup events',
+      icon: '⚡',
+      category: 'participation',
+      criteria: { type: 'events_joined', value: 10, operator: 'gte' },
+      reward: { aquaCoins: 300 },
+      rarity: 'epic'
+    },
+    {
+      name: 'Beach Champion',
+      description: 'Volunteer for 50+ hours in beach cleanups',
+      icon: '♻️',
+      category: 'impact',
+      criteria: { type: 'hours_volunteered', value: 50, operator: 'gte' },
+      reward: { aquaCoins: 500 },
+      rarity: 'epic'
+    },
+    {
+      name: 'Cleanup Legend',
+      description: 'Participate in 25 beach cleanup events',
+      icon: '🏅',
+      category: 'participation',
+      criteria: { type: 'events_joined', value: 25, operator: 'gte' },
+      reward: { aquaCoins: 750 },
+      rarity: 'legendary'
+    },
+    {
+      name: 'Ocean Protector',
+      description: 'Volunteer for 100+ hours in beach cleanups',
+      icon: '🛡️',
+      category: 'impact',
+      criteria: { type: 'hours_volunteered', value: 100, operator: 'gte' },
+      reward: { aquaCoins: 1000 },
+      rarity: 'legendary'
+    },
+    {
+      name: 'Early Bird',
+      description: 'Join 3 events before 8 AM',
+      icon: '🌅',
+      category: 'special',
+      criteria: { type: 'custom', value: 3, operator: 'gte' },
+      reward: { aquaCoins: 100 },
+      rarity: 'rare'
+    },
+    {
+      name: 'Weekend Warrior',
+      description: 'Participate in 15 weekend cleanup events',
+      icon: '⚔️',
+      category: 'participation',
+      criteria: { type: 'events_joined', value: 15, operator: 'gte' },
+      reward: { aquaCoins: 400 },
+      rarity: 'epic'
+    },
+    {
+      name: 'Community Leader',
+      description: 'Recruit 5 new volunteers to events',
+      icon: '👑',
+      category: 'leadership',
+      criteria: { type: 'custom', value: 5, operator: 'gte' },
+      reward: { aquaCoins: 300 },
+      rarity: 'epic'
+    },
+    {
+      name: 'Consistency King',
+      description: 'Participate in events for 6 consecutive months',
+      icon: '📅',
+      category: 'participation',
+      criteria: { type: 'custom', value: 6, operator: 'gte' },
+      reward: { aquaCoins: 600 },
+      rarity: 'legendary'
+    }
+  ];
+
+  try {
+    for (const achievementData of achievementsData) {
+      const existingAchievement = await Achievement.findOne({ name: achievementData.name });
+      if (!existingAchievement) {
+        await Achievement.create(achievementData);
+      }
+    }
+    console.log('✅ Achievements seeded successfully');
+  } catch (error) {
+    console.error('❌ Error seeding achievements:', error);
+  }
+};
+
+// Seed achievements on server start
+seedAchievements();
+
 // Get all achievements with user progress
 router.get('/', authenticateToken, asyncHandler(async (req: AuthRequest, res: express.Response) => {
   const achievements = await Achievement.find({ isActive: true }).sort({ category: 1, rarity: 1 });

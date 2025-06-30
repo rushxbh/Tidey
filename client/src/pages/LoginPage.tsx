@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Waves, Mail, Lock, Eye, EyeOff } from 'lucide-react';
@@ -10,8 +10,16 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      const redirectPath = user.role === 'volunteer' ? '/volunteer/dashboard' : '/ngo/dashboard';
+      navigate(redirectPath, { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +28,7 @@ const LoginPage: React.FC = () => {
 
     try {
       await login(email, password);
-      navigate('/');
+      // The useEffect above will handle the redirect once user is set
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {
