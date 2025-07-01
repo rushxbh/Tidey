@@ -1,4 +1,4 @@
-# Tidewy - Beach Cleanup Platform
+# Tidey - Beach Cleanup Platform
 
 A comprehensive full-stack web application for organizing and managing beach cleanup events with volunteer engagement and gamification features.
 
@@ -38,7 +38,7 @@ A comprehensive full-stack web application for organizing and managing beach cle
 1. **Clone and install dependencies**
 ```bash
 git clone <repository-url>
-cd tidewy-platform
+cd tidey-platform
 npm run install:all
 ```
 
@@ -48,7 +48,7 @@ npm run install:all
 cp .env.example .env
 
 # Update MongoDB connection string and other variables
-# MONGODB_URI=mongodb://localhost:27017/tidewy
+# MONGODB_URI=mongodb://localhost:27017/tidey
 # JWT_SECRET=your-super-secret-jwt-key
 ```
 
@@ -65,7 +65,7 @@ npm run server:dev  # Backend on http://localhost:3001
 ## 📁 Project Structure
 
 ```
-tidewy-platform/
+tidey-platform/
 ├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/     # Reusable UI components
@@ -176,7 +176,7 @@ npm start
 ### Environment Variables (Production)
 ```bash
 NODE_ENV=production
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/tidewy
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/tidey
 JWT_SECRET=your-production-secret-key
 CLIENT_URL=https://your-domain.com
 ```
@@ -219,14 +219,6 @@ npm run test:coverage
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Pexels**: Stock photography for UI mockups
-- **Lucide React**: Beautiful icon library
-- **Tailwind CSS**: Utility-first CSS framework
-- **MongoDB**: Flexible document database
-- **Express.js**: Fast web framework for Node.js
 
 ---
 
