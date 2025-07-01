@@ -172,18 +172,22 @@ const Layout: React.FC<LayoutProps> = ({ requiredRole }) => {
         </main>
       </div>
 
-      {/* Chatbot Button */}
-      <button
-        onClick={() => setShowChatbot(true)}
-        className="fixed bottom-6 right-6 bg-primary-600 hover:bg-primary-700 text-white p-4 rounded-full shadow-lg transition-colors duration-200 z-40"
-      >
-        <MessageCircle className="h-6 w-6" />
-      </button>
+      {/* Chatbot Button - Positioned near bottom right */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          onClick={() => setShowChatbot(true)}
+          className="bg-primary-600 hover:bg-primary-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </button>
 
-      {/* Chatbot Modal */}
-      {showChatbot && (
-        <ChatbotModal onClose={() => setShowChatbot(false)} />
-      )}
+        {/* Chatbot Modal - Positioned relative to button */}
+        {showChatbot && (
+          <div className="absolute bottom-16 right-0 z-50">
+            <ChatbotModal onClose={() => setShowChatbot(false)} />
+          </div>
+        )}
+      </div>
 
       {/* Sidebar overlay */}
       {sidebarOpen && (

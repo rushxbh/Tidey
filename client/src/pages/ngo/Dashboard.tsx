@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, TrendingUp, MapPin, Plus, BarChart3, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Users, TrendingUp, MapPin, Plus, BarChart3, Edit, Trash2, Camera } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -16,6 +16,7 @@ interface Event {
   maxParticipants: number;
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   wasteCollected?: number;
+  images?: string[];
 }
 
 interface NGOStats {
@@ -37,6 +38,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedEventImages, setSelectedEventImages] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -51,7 +53,7 @@ const Dashboard: React.FC = () => {
       setStats(statsResponse.data);
 
       // Fetch recent events (limit to 5 for dashboard)
-      const eventsResponse = await axios.get('/api/events?limit=5');
+      const eventsResponse = await axios.get('/api/events?limit=5&sort=date:desc');
       setEvents(eventsResponse.data.events || []);
 
     } catch (err: any) {
@@ -70,11 +72,71 @@ const Dashboard: React.FC = () => {
     try {
       await axios.delete(`/api/events/${eventId}`);
       fetchDashboardData(); // Refresh data
-      alert('Event deleted successfully');
+      showSuccessNotification('Event deleted successfully');
     } catch (err: any) {
       console.error('Error deleting event:', err);
-      alert(err.response?.data?.message || 'Failed to delete event');
+      showErrorNotification(err.response?.data?.message || 'Failed to delete event');
     }
+  };
+
+  const handleViewEventImages = async (eventId: string) => {
+    try {
+      const response = await axios.get(`/api/event-images/event/${eventId}`);
+      setSelectedEventImages(eventId);
+      // You can implement a modal to show images here
+    } catch (err: any) {
+      console.error('Error fetching event images:', err);
+      showErrorNotification('Failed to load event images');
+    }
+  };
+
+  const handleUploadToBeachScanner = async (eventId: string) => {
+    try {
+      // Get event images
+      const response = await axios.get(`/api/event-images/event/${eventId}`);
+      const images = response.data.images;
+      
+      if (images.length === 0) {
+        showErrorNotification('No images found for this event');
+        return;
+      }
+
+      // Navigate to beach scanner with event data
+      window.location.href = `/ngo/beach-scanner?eventId=${eventId}`;
+    } catch (err: any) {
+      console.error('Error uploading to beach scanner:', err);
+      showErrorNotification('Failed to upload to beach scanner');
+    }
+  };
+
+  const showSuccessNotification = (message: string) => {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    notification.innerHTML = `
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 3000);
+  };
+
+  const showErrorNotification = (message: string) => {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    notification.innerHTML = `
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 3000);
   };
 
   const getStatusColor = (status: string) => {
@@ -106,7 +168,9 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">NGO Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {user?.organizationName ? `${user.organizationName}'s Dashboard` : 'NGO Dashboard'}
+        </h1>
         <button 
           onClick={() => setShowCreateModal(true)}
           className="btn-primary"
@@ -220,6 +284,26 @@ const Dashboard: React.FC = () => {
                   <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(event.status)}`}>
                     {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                   </span>
+                  
+                  {event.status === 'completed' && (
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => handleViewEventImages(event._id)}
+                        className="p-2 text-blue-600 hover:text-blue-700"
+                        title="View Images"
+                      >
+                        <Camera className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleUploadToBeachScanner(event._id)}
+                        className="p-2 text-green-600 hover:text-green-700"
+                        title="Upload to Beach Scanner"
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  
                   <button
                     onClick={() => window.location.href = `/ngo/events/${event._id}/edit`}
                     className="p-2 text-gray-400 hover:text-gray-600"
@@ -303,8 +387,6 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
     description: '',
     locationName: '',
     locationAddress: '',
-    latitude: '',
-    longitude: '',
     date: '',
     startTime: '',
     endTime: '',
@@ -328,8 +410,8 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
           name: formData.locationName,
           address: formData.locationAddress,
           coordinates: {
-            latitude: parseFloat(formData.latitude),
-            longitude: parseFloat(formData.longitude)
+            latitude: 0, // Will be set by location search
+            longitude: 0
           }
         },
         date: formData.date,
@@ -420,34 +502,6 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   value={formData.locationAddress}
                   onChange={handleInputChange}
                   className="input-field"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  name="latitude"
-                  value={formData.latitude}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="34.0194"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  name="longitude"
-                  value={formData.longitude}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="-118.4912"
                   required
                 />
               </div>

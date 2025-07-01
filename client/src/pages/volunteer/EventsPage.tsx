@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, Clock, Filter, QrCode, Camera, CheckCircle, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Filter, QrCode, Camera, CheckCircle, ExternalLink, Upload } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -13,10 +13,6 @@ interface Event {
   location: {
     name: string;
     address: string;
-    coordinates: {
-      latitude: number;
-      longitude: number;
-    };
   };
   currentParticipants: number;
   maxParticipants: number;
@@ -59,7 +55,8 @@ const EventsPage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page,
-        limit: 9
+        limit: 9,
+        sort: 'date:desc' // Latest events first
       };
 
       if (filter !== 'all') {
@@ -95,7 +92,6 @@ const EventsPage: React.FC = () => {
       await axios.post(`/api/events/${eventId}/register`);
       fetchEvents();
       fetchUserAttendances();
-      // Show success notification instead of alert
       showSuccessNotification('Successfully registered for event!');
     } catch (err: any) {
       console.error('Error joining event:', err);
@@ -143,7 +139,6 @@ const EventsPage: React.FC = () => {
   };
 
   const showSuccessNotification = (message: string) => {
-    // Create and show success notification
     const notification = document.createElement('div');
     notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
     notification.innerHTML = `
@@ -159,7 +154,6 @@ const EventsPage: React.FC = () => {
   };
 
   const showErrorNotification = (message: string) => {
-    // Create and show error notification
     const notification = document.createElement('div');
     notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
     notification.innerHTML = `
@@ -174,9 +168,9 @@ const EventsPage: React.FC = () => {
     }, 3000);
   };
 
-  const getGoogleMapsUrl = (location: Event['location']) => {
-    const { latitude, longitude } = location.coordinates;
-    return `https://www.google.com/maps?q=${latitude},${longitude}`;
+  const getGoogleMapsUrl = (locationName: string, address: string) => {
+    const query = `${locationName}, ${address}`;
+    return `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -371,7 +365,7 @@ const EventsPage: React.FC = () => {
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-2" />
                       <a
-                        href={getGoogleMapsUrl(event.location)}
+                        href={getGoogleMapsUrl(event.location.name, event.location.address)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary-600 hover:text-primary-700 flex items-center"

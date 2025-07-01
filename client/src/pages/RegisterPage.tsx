@@ -366,7 +366,7 @@ const RegisterPage: React.FC = () => {
         <div className="logo-container">
           <Waves size={48} />
         </div>
-        <h1>Join Tidewy</h1>
+        <h1>Join Tidey</h1>
         <p>Create your account</p>
 
         {error && (

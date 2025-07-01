@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, Coins, Trophy, TrendingUp, BarChart3 } from 'lucide-react';
+import { Calendar, MapPin, Users, Coins, Trophy, TrendingUp, BarChart3, ExternalLink, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -30,9 +30,17 @@ interface BeachHealthData {
   lastUpdated: string;
 }
 
+interface Attendance {
+  event: string;
+  status: 'registered' | 'checked-in' | 'checked-out';
+  checkInTime?: string;
+  checkOutTime?: string;
+  hoursWorked?: number;
+}
+
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
-  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const { user, connectWallet } = useAuth();
+  const [registeredEvents, setRegisteredEvents] = useState<Event[]>([]);
   const [userStats, setUserStats] = useState<UserStats>({
     eventsJoined: 0,
     totalHours: 0,
@@ -40,21 +48,20 @@ const Dashboard: React.FC = () => {
     achievements: 0
   });
   const [beachHealthData, setBeachHealthData] = useState<BeachHealthData[]>([]);
+  const [attendances, setAttendances] = useState<{ [key: string]: Attendance }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showWalletPrompt, setShowWalletPrompt] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchUserAttendances();
   }, []);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
-      // Fetch upcoming events
-      const eventsResponse = await axios.get('/api/events?status=upcoming&limit=5');
-      setUpcomingEvents(eventsResponse.data.events || []);
-
       // Fetch user statistics
       const statsResponse = await axios.get('/api/users/stats');
       setUserStats(statsResponse.data);
@@ -76,15 +83,44 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleJoinEvent = async (eventId: string) => {
+  const fetchUserAttendances = async () => {
     try {
-      await axios.post(`/api/events/${eventId}/register`);
-      // Refresh events after joining
-      fetchDashboardData();
-      showSuccessNotification('Successfully registered for event!');
+      const response = await axios.get('/api/users/attendances');
+      const attendanceMap: { [key: string]: Attendance } = {};
+      response.data.attendances?.forEach((attendance: Attendance) => {
+        attendanceMap[attendance.event] = attendance;
+      });
+      setAttendances(attendanceMap);
+
+      // Fetch only registered events
+      const eventIds = Object.keys(attendanceMap);
+      if (eventIds.length > 0) {
+        const eventsResponse = await axios.get(`/api/events?ids=${eventIds.join(',')}&limit=5`);
+        setRegisteredEvents(eventsResponse.data.events || []);
+      }
     } catch (err: any) {
-      console.error('Error joining event:', err);
-      showErrorNotification(err.response?.data?.message || 'Failed to join event');
+      console.error('Error fetching attendances:', err);
+    }
+  };
+
+  const handleUnregister = async (eventId: string) => {
+    if (!window.confirm('Are you sure you want to unregister from this event?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/events/${eventId}/register`);
+      fetchUserAttendances();
+      showSuccessNotification('Successfully unregistered from event!');
+    } catch (err: any) {
+      console.error('Error unregistering:', err);
+      showErrorNotification(err.response?.data?.message || 'Failed to unregister');
+    }
+  };
+
+  const handleConnectWallet = () => {
+    if (!user?.walletConnected) {
+      setShowWalletPrompt(true);
     }
   };
 
@@ -124,6 +160,10 @@ const Dashboard: React.FC = () => {
     return 'text-red-600 bg-red-100';
   };
 
+  const getGoogleMapsUrl = (locationName: string) => {
+    return `https://www.google.com/maps/search/${encodeURIComponent(locationName)}`;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -139,9 +179,19 @@ const Dashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Volunteer Dashboard</h1>
-        <div className="flex items-center space-x-2 bg-ocean-50 px-4 py-2 rounded-lg">
-          <Coins className="h-5 w-5 text-ocean-600" />
-          <span className="font-semibold text-ocean-800">{userStats.aquaCoins} AquaCoins</span>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 bg-ocean-50 px-4 py-2 rounded-lg">
+            <Coins className="h-5 w-5 text-ocean-600" />
+            <span className="font-semibold text-ocean-800">{userStats.aquaCoins} AquaCoins</span>
+          </div>
+          {!user?.walletConnected && (
+            <button
+              onClick={handleConnectWallet}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              Connect Wallet
+            </button>
+          )}
         </div>
       </div>
 
@@ -202,6 +252,78 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* My Registered Events */}
+      <div className="card">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">My Registered Events</h2>
+        {registeredEvents.length === 0 ? (
+          <div className="text-center py-8">
+            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No registered events</p>
+            <button 
+              onClick={() => window.location.href = '/volunteer/events'}
+              className="mt-2 btn-primary"
+            >
+              Browse Events
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {registeredEvents.map((event) => {
+              const attendance = attendances[event._id];
+              return (
+                <div key={event._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-2 bg-primary-100 rounded-lg">
+                      <MapPin className="h-5 w-5 text-primary-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{event.title}</h3>
+                      <p className="text-sm text-gray-600">
+                        {new Date(event.date).toLocaleDateString()} • {event.startTime} - {event.endTime}
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <a
+                          href={getGoogleMapsUrl(event.location.name)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+                        >
+                          {event.location.name}
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {event.currentParticipants}/{event.maxParticipants} participants
+                      </p>
+                      {attendance && (
+                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
+                          attendance.status === 'checked-out' ? 'bg-green-100 text-green-800' :
+                          attendance.status === 'checked-in' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {attendance.status === 'checked-out' ? `Completed (${attendance.hoursWorked || 0}h)` :
+                           attendance.status === 'checked-in' ? 'Checked In' : 'Registered'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {event.status === 'upcoming' && attendance?.status === 'registered' && (
+                      <button
+                        onClick={() => handleUnregister(event._id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                      >
+                        Unregister
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Beach Health Index */}
       <div className="card">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Beach Health Index</h2>
@@ -233,46 +355,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Upcoming Events */}
-      <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Upcoming Events</h2>
-        {upcomingEvents.length === 0 ? (
-          <div className="text-center py-8">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No upcoming events available</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {upcomingEvents.map((event) => (
-              <div key={event._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="p-2 bg-primary-100 rounded-lg">
-                    <MapPin className="h-5 w-5 text-primary-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{event.title}</h3>
-                    <p className="text-sm text-gray-600">
-                      {new Date(event.date).toLocaleDateString()} • {event.startTime} - {event.endTime}
-                    </p>
-                    <p className="text-sm text-gray-600">{event.location.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {event.currentParticipants}/{event.maxParticipants} participants
-                    </p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => handleJoinEvent(event._id)}
-                  className="btn-primary"
-                  disabled={event.currentParticipants >= event.maxParticipants}
-                >
-                  {event.currentParticipants >= event.maxParticipants ? 'Full' : 'Join Event'}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Recent Achievements */}
       <div className="card">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Achievements</h2>
@@ -302,6 +384,43 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Wallet Connection Prompt */}
+      {showWalletPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Connect Your Wallet</h2>
+              <button
+                onClick={() => setShowWalletPrompt(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Connect your MetaMask wallet to receive AquaCoins directly when you complete events and achievements!
+            </p>
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={() => setShowWalletPrompt(false)}
+                className="btn-secondary"
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={() => {
+                  connectWallet();
+                  setShowWalletPrompt(false);
+                }}
+                className="btn-primary"
+              >
+                Connect MetaMask
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

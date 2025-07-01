@@ -97,7 +97,7 @@ const AnalyticsPage: React.FC = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'tidewy-analytics.csv';
+    a.download = 'tidey-analytics.csv';
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -202,58 +202,103 @@ const AnalyticsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Monthly Trends Chart */}
+      {/* Enhanced Monthly Trends Chart */}
       <div className="card">
         <h3 className="text-xl font-bold text-gray-900 mb-6">Monthly Trends</h3>
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Events Trend */}
           <div>
-            <h4 className="font-medium text-gray-700 mb-3">Events per Month</h4>
-            <div className="flex items-end space-x-2 h-32">
-              {analytics.monthlyTrends.map((trend, index) => (
-                <div key={index} className="flex-1 flex flex-col items-center">
-                  <div
-                    className="w-full bg-primary-600 rounded-t"
-                    style={{ height: `${(trend.events / Math.max(...analytics.monthlyTrends.map(t => t.events))) * 100}%` }}
-                  ></div>
-                  <span className="text-xs text-gray-600 mt-2">{trend.month}</span>
-                  <span className="text-xs font-medium text-gray-900">{trend.events}</span>
-                </div>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-gray-700">Events per Month</h4>
+              <div className="text-sm text-gray-500">
+                Total: {analytics.monthlyTrends.reduce((sum, trend) => sum + trend.events, 0)} events
+              </div>
+            </div>
+            <div className="relative">
+              <div className="flex items-end justify-between space-x-2 h-40 bg-gray-50 rounded-lg p-4">
+                {analytics.monthlyTrends.map((trend, index) => {
+                  const maxEvents = Math.max(...analytics.monthlyTrends.map(t => t.events));
+                  const height = (trend.events / maxEvents) * 100;
+                  return (
+                    <div key={index} className="flex-1 flex flex-col items-center">
+                      <div className="relative group">
+                        <div
+                          className="w-full bg-primary-600 rounded-t-md transition-all duration-300 hover:bg-primary-700 cursor-pointer"
+                          style={{ height: `${height}%`, minHeight: '8px' }}
+                        ></div>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                          {trend.events} events
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-600 mt-2 font-medium">{trend.month}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Volunteers Trend */}
           <div>
-            <h4 className="font-medium text-gray-700 mb-3">Volunteers per Month</h4>
-            <div className="flex items-end space-x-2 h-32">
-              {analytics.monthlyTrends.map((trend, index) => (
-                <div key={index} className="flex-1 flex flex-col items-center">
-                  <div
-                    className="w-full bg-green-600 rounded-t"
-                    style={{ height: `${(trend.volunteers / Math.max(...analytics.monthlyTrends.map(t => t.volunteers))) * 100}%` }}
-                  ></div>
-                  <span className="text-xs text-gray-600 mt-2">{trend.month}</span>
-                  <span className="text-xs font-medium text-gray-900">{trend.volunteers}</span>
-                </div>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-gray-700">Volunteers per Month</h4>
+              <div className="text-sm text-gray-500">
+                Total: {analytics.monthlyTrends.reduce((sum, trend) => sum + trend.volunteers, 0)} volunteers
+              </div>
+            </div>
+            <div className="relative">
+              <div className="flex items-end justify-between space-x-2 h-40 bg-gray-50 rounded-lg p-4">
+                {analytics.monthlyTrends.map((trend, index) => {
+                  const maxVolunteers = Math.max(...analytics.monthlyTrends.map(t => t.volunteers));
+                  const height = (trend.volunteers / maxVolunteers) * 100;
+                  return (
+                    <div key={index} className="flex-1 flex flex-col items-center">
+                      <div className="relative group">
+                        <div
+                          className="w-full bg-green-600 rounded-t-md transition-all duration-300 hover:bg-green-700 cursor-pointer"
+                          style={{ height: `${height}%`, minHeight: '8px' }}
+                        ></div>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                          {trend.volunteers} volunteers
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-600 mt-2 font-medium">{trend.month}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Waste Collection Trend */}
           <div>
-            <h4 className="font-medium text-gray-700 mb-3">Waste Collected per Month (kg)</h4>
-            <div className="flex items-end space-x-2 h-32">
-              {analytics.monthlyTrends.map((trend, index) => (
-                <div key={index} className="flex-1 flex flex-col items-center">
-                  <div
-                    className="w-full bg-yellow-600 rounded-t"
-                    style={{ height: `${(trend.waste / Math.max(...analytics.monthlyTrends.map(t => t.waste))) * 100}%` }}
-                  ></div>
-                  <span className="text-xs text-gray-600 mt-2">{trend.month}</span>
-                  <span className="text-xs font-medium text-gray-900">{trend.waste}</span>
-                </div>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-gray-700">Waste Collected per Month (kg)</h4>
+              <div className="text-sm text-gray-500">
+                Total: {analytics.monthlyTrends.reduce((sum, trend) => sum + trend.waste, 0)}kg
+              </div>
+            </div>
+            <div className="relative">
+              <div className="flex items-end justify-between space-x-2 h-40 bg-gray-50 rounded-lg p-4">
+                {analytics.monthlyTrends.map((trend, index) => {
+                  const maxWaste = Math.max(...analytics.monthlyTrends.map(t => t.waste));
+                  const height = (trend.waste / maxWaste) * 100;
+                  return (
+                    <div key={index} className="flex-1 flex flex-col items-center">
+                      <div className="relative group">
+                        <div
+                          className="w-full bg-yellow-600 rounded-t-md transition-all duration-300 hover:bg-yellow-700 cursor-pointer"
+                          style={{ height: `${height}%`, minHeight: '8px' }}
+                        ></div>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                          {trend.waste}kg
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-600 mt-2 font-medium">{trend.month}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -304,7 +349,7 @@ const AnalyticsPage: React.FC = () => {
               <h4 className="font-medium text-gray-700 mb-3">Volunteer Retention</h4>
               <div className="w-full bg-gray-200 rounded-full h-4">
                 <div
-                  className="bg-gradient-to-r from-green-500 to-blue-500 h-4 rounded-full"
+                  className="bg-gradient-to-r from-green-500 to-blue-500 h-4 rounded-full transition-all duration-500"
                   style={{ 
                     width: `${(analytics.volunteerEngagement.returningVolunteers / analytics.totalVolunteers) * 100}%` 
                   }}
@@ -337,7 +382,7 @@ const AnalyticsPage: React.FC = () => {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className={`h-2 rounded-full ${
+                  className={`h-2 rounded-full transition-all duration-500 ${
                     location.healthScore >= 80 ? 'bg-green-500' :
                     location.healthScore >= 60 ? 'bg-yellow-500' :
                     'bg-red-500'

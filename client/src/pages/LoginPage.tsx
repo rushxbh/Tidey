@@ -345,7 +345,7 @@ const LoginPage: React.FC = () => {
         <div className="logo-container">
           <Waves size={48} />
         </div>
-        <h1>Welcome to Tidewy</h1>
+        <h1>Welcome to Tidey</h1>
         <p>Sign in to your account</p>
 
         {error && (

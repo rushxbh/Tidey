@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, Clock, Filter, Plus, Edit, Trash2, Eye, QrCode, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Users, Filter, Plus, Edit, Trash2, Eye, QrCode, ExternalLink, Camera, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -13,7 +13,7 @@ interface Event {
   location: {
     name: string;
     address: string;
-    coordinates: {
+    coordinates?: {
       latitude: number;
       longitude: number;
     };
@@ -32,6 +32,38 @@ interface Event {
   images: string[];
 }
 
+interface EventImage {
+  _id: string;
+  imageUrl: string;
+  description?: string;
+  volunteer: {
+    name: string;
+    profilePicture?: string;
+  };
+  beforeAfter: 'before' | 'after';
+  approved: boolean;
+  createdAt: string;
+}
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'upcoming':
+      return 'bg-blue-100 text-blue-800';
+    case 'ongoing':
+      return 'bg-green-100 text-green-800';
+    case 'completed':
+      return 'bg-gray-100 text-gray-800';
+    case 'cancelled':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+const getStatusText = (status: string) => {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
 const EventsPage: React.FC = () => {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
@@ -43,6 +75,9 @@ const EventsPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showQRCode, setShowQRCode] = useState<string | null>(null);
+  const [showEventImages, setShowEventImages] = useState<string | null>(null);
+  const [eventImages, setEventImages] = useState<EventImage[]>([]);
+  const [loadingImages, setLoadingImages] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -53,7 +88,8 @@ const EventsPage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page,
-        limit: 12
+        limit: 12,
+        sort: 'date:desc' // Latest events first
       };
 
       if (filter !== 'all') {
@@ -113,6 +149,24 @@ const EventsPage: React.FC = () => {
     }
   };
 
+  const fetchEventImages = async (eventId: string) => {
+    try {
+      setLoadingImages(true);
+      const response = await axios.get(`/api/event-images/event/${eventId}`);
+      setEventImages(response.data.images || []);
+      setShowEventImages(eventId);
+    } catch (err: any) {
+      console.error('Error fetching event images:', err);
+      showErrorNotification('Failed to load event images');
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
+  const handleUploadToBeachScanner = (eventId: string) => {
+    window.location.href = `/ngo/beach-scanner?eventId=${eventId}`;
+  };
+
   const showSuccessNotification = (message: string) => {
     const notification = document.createElement('div');
     notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
@@ -144,36 +198,106 @@ const EventsPage: React.FC = () => {
   };
 
   const getGoogleMapsUrl = (location: Event['location']) => {
-    const { latitude, longitude } = location.coordinates;
-    return `https://www.google.com/maps?q=${latitude},${longitude}`;
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'upcoming':
-        return 'bg-blue-100 text-blue-800';
-      case 'ongoing':
-        return 'bg-green-100 text-green-800';
-      case 'completed':
-        return 'bg-gray-100 text-gray-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    if (location.coordinates) {
+      return `https://www.google.com/maps?q=${location.coordinates.latitude},${location.coordinates.longitude}`;
     }
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address || location.name)}`;
   };
-
-  const getStatusText = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  };
-
-  if (loading && events.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading events...</p>
+  
+    if (loading && events.length === 0) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading events...</p>
+          </div>
         </div>
+      );
+    }
+
+  // If showing event images
+  if (showEventImages) {
+    const event = events.find(e => e._id === showEventImages);
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setShowEventImages(null)}
+            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+          >
+            ←
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Event Images</h1>
+            <p className="text-gray-600">{event?.title}</p>
+          </div>
+          <div className="ml-auto">
+            <button
+              onClick={() => handleUploadToBeachScanner(showEventImages)}
+              className="btn-primary"
+            >
+              <BarChart3 className="h-5 w-5 mr-2" />
+              Analyze in Beach Scanner
+            </button>
+          </div>
+        </div>
+
+        {loadingImages ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading images...</p>
+          </div>
+        ) : eventImages.length === 0 ? (
+          <div className="text-center py-12">
+            <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No images found</h3>
+            <p className="text-gray-600">Volunteers haven't uploaded any images for this event yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {eventImages.map((image) => (
+              <div key={image._id} className="card overflow-hidden">
+                <img
+                  src={image.imageUrl}
+                  alt={image.description || 'Event image'}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      image.beforeAfter === 'before' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {image.beforeAfter === 'before' ? 'Before Cleanup' : 'After Cleanup'}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(image.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  
+                  {image.description && (
+                    <p className="text-sm text-gray-600 mb-3">{image.description}</p>
+                  )}
+                  
+                  <div className="flex items-center space-x-2">
+                    {image.volunteer.profilePicture ? (
+                      <img
+                        src={image.volunteer.profilePicture}
+                        alt={image.volunteer.name}
+                        className="h-6 w-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-6 w-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <Users className="h-3 w-3 text-gray-500" />
+                      </div>
+                    )}
+                    <span className="text-xs text-gray-600">Uploaded by {image.volunteer.name}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -345,14 +469,18 @@ const EventsPage: React.FC = () => {
                         </button>
                       </>
                     )}
-                    {(event.status === 'completed' || event.status === 'cancelled') && (
+                    {event.status === 'completed' && (
+                      <button
+                        onClick={() => fetchEventImages(event._id)}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center"
+                      >
+                        <Camera className="h-4 w-4 mr-1" />
+                        View Images
+                      </button>
+                    )}
+                    {event.status === 'cancelled' && (
                       <div className="w-full text-center py-2 text-sm text-gray-500">
-                        Event {event.status}
-                        {event.wasteCollected && (
-                          <span className="block text-green-600 font-medium">
-                            {event.wasteCollected}kg waste collected
-                          </span>
-                        )}
+                        Event cancelled
                       </div>
                     )}
                   </div>
@@ -466,15 +594,13 @@ const QRCodeModal: React.FC<{ qrCode: string; onClose: () => void }> = ({ qrCode
   );
 };
 
-// Create Event Modal Component (same as in Dashboard)
+// Create Event Modal Component
 const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }> = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     locationName: '',
     locationAddress: '',
-    latitude: '',
-    longitude: '',
     date: '',
     startTime: '',
     endTime: '',
@@ -515,8 +641,8 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
           name: formData.locationName,
           address: formData.locationAddress,
           coordinates: {
-            latitude: parseFloat(formData.latitude),
-            longitude: parseFloat(formData.longitude)
+            latitude: 0, // Will be set by location search in future
+            longitude: 0
           }
         },
         date: formData.date,
@@ -596,7 +722,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   value={formData.locationName}
                   onChange={handleInputChange}
                   className="input-field"
-                  placeholder="e.g., Santa Monica Beach"
+                  placeholder="e.g., Juhu Beach"
                   required
                 />
               </div>
@@ -609,34 +735,6 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   value={formData.locationAddress}
                   onChange={handleInputChange}
                   className="input-field"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  name="latitude"
-                  value={formData.latitude}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="34.0194"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  name="longitude"
-                  value={formData.longitude}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="-118.4912"
                   required
                 />
               </div>
@@ -840,24 +938,95 @@ const EventDetailsModal: React.FC<{ event: Event; onClose: () => void }> = ({ ev
   );
 };
 
-// Helper function (moved outside component to avoid re-declaration)
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'upcoming':
-      return 'bg-blue-100 text-blue-800';
-    case 'ongoing':
-      return 'bg-green-100 text-green-800';
-    case 'completed':
-      return 'bg-gray-100 text-gray-800';
-    case 'cancelled':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
+// Event Images Modal Component
+const EventImagesModal: React.FC<{ 
+  eventId: string; 
+  images: EventImage[];
+  onClose: () => void;
+  onUploadToScanner: (eventId: string) => void;
+}> = ({ eventId, images, onClose, onUploadToScanner }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">Event Images</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <Plus className="h-6 w-6 rotate-45" />
+            </button>
+          </div>
 
-const getStatusText = (status: string) => {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+          {images.length === 0 ? (
+            <div className="text-center py-12">
+              <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No images found</h3>
+              <p className="text-gray-600">Volunteers haven't uploaded any images for this event yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {images.map((image) => (
+                <div key={image._id} className="border rounded-lg overflow-hidden">
+                  <img
+                    src={image.imageUrl}
+                    alt={image.description || 'Event image'}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        image.beforeAfter === 'before' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+                      }`}>
+                        {image.beforeAfter === 'before' ? 'Before Cleanup' : 'After Cleanup'}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(image.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    
+                    {image.description && (
+                      <p className="text-sm text-gray-600 mb-3">{image.description}</p>
+                    )}
+                    
+                    <div className="flex items-center space-x-2">
+                      {image.volunteer.profilePicture ? (
+                        <img
+                          src={image.volunteer.profilePicture}
+                          alt={image.volunteer.name}
+                          className="h-6 w-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-6 w-6 bg-gray-200 rounded-full flex items-center justify-center">
+                          <Users className="h-3 w-3 text-gray-500" />
+                        </div>
+                      )}
+                      <span className="text-xs text-gray-600">Uploaded by {image.volunteer.name}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-end space-x-3 mt-6">
+            <button
+              onClick={onClose}
+              className="btn-secondary"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => onUploadToScanner(eventId)}
+              className="btn-primary"
+              disabled={images.length === 0}
+            >
+              <BarChart3 className="h-5 w-5 mr-2" />
+              Analyze in Beach Scanner
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default EventsPage;
