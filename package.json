@@ -14,7 +14,10 @@
     "server:start": "cd server && npm start"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-ignition": "^0.15.12",
+    "@types/chai": "^5.2.2",
     "@types/uuid": "^10.0.0",
+    "chai": "^5.2.0",
     "concurrently": "^8.2.2"
   },
   "workspaces": [
@@ -22,7 +25,9 @@
     "server"
   ],
   "dependencies": {
+    "ethers": "^6.14.4",
     "mongod": "^2.0.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "viem": "^2.31.6"
   }
 }

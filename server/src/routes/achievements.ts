@@ -262,32 +262,32 @@ router.post('/check-progress', authenticateToken, asyncHandler(async (req: AuthR
 }));
 
 // Create achievement (Admin only - for seeding)
-router.post('/', authenticateToken, requireRole(['ngo']), [
-  body('name').trim().isLength({ min: 3, max: 100 }).withMessage('Name must be between 3 and 100 characters'),
-  body('description').trim().isLength({ min: 10, max: 500 }).withMessage('Description must be between 10 and 500 characters'),
-  body('category').isIn(['participation', 'impact', 'leadership', 'special']).withMessage('Invalid category'),
-  body('criteria.type').isIn(['events_joined', 'hours_volunteered', 'waste_collected', 'custom']).withMessage('Invalid criteria type'),
-  body('criteria.value').isInt({ min: 1 }).withMessage('Criteria value must be positive'),
-  body('reward.aquaCoins').isInt({ min: 1 }).withMessage('Reward coins must be positive'),
-  body('rarity').isIn(['common', 'rare', 'epic', 'legendary']).withMessage('Invalid rarity')
-], asyncHandler(async (req: AuthRequest, res: express.Response) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors.array()
-    });
-  }
+// // router.post('/', authenticateToken, requireRole(['ngo']), [
+// //   body('name').trim().isLength({ min: 3, max: 100 }).withMessage('Name must be between 3 and 100 characters'),
+// //   body('description').trim().isLength({ min: 10, max: 500 }).withMessage('Description must be between 10 and 500 characters'),
+// //   body('category').isIn(['participation', 'impact', 'leadership', 'special']).withMessage('Invalid category'),
+// //   body('criteria.type').isIn(['events_joined', 'hours_volunteered', 'waste_collected', 'custom']).withMessage('Invalid criteria type'),
+// //   body('criteria.value').isInt({ min: 1 }).withMessage('Criteria value must be positive'),
+// //   body('reward.aquaCoins').isInt({ min: 1 }).withMessage('Reward coins must be positive'),
+// //   body('rarity').isIn(['common', 'rare', 'epic', 'legendary']).withMessage('Invalid rarity')
+// // ], asyncHandler(async (req: AuthRequest, res: express.Response) => {
+// //   const errors = validationResult(req);
+// //   if (!errors.isEmpty()) {
+// //     return res.status(400).json({
+// //       success: false,
+// //       message: 'Validation failed',
+// //       errors: errors.array()
+// //     });
+// //   }
 
-  const achievement = new Achievement(req.body);
-  await achievement.save();
+//   const achievement = new Achievement(req.body);
+//   await achievement.save();
 
-  res.status(201).json({
-    success: true,
-    message: 'Achievement created successfully',
-    achievement
-  });
-}));
+//   res.status(201).json({
+//     success: true,
+//     message: 'Achievement created successfully',
+//     achievement
+//   });
+// }));
 
 export default router;
