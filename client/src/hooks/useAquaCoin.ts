@@ -1,1 +1,0 @@
-import { aquaCoinABI } from "../generated/factories/contracts/AquaCoin__factory";
