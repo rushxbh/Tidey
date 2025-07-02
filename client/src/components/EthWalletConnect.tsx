@@ -9,12 +9,16 @@ const EthWalletConnect: React.FC = () => {
   });
 
   return (
-    <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-lg shadow-lg text-white">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold flex items-center gap-2">
-          <span className="text-2xl">⚡</span>
-          ETH Wallet
-        </h3>
+    <div className="bg-white border border-blue-200 rounded-xl shadow-lg px-4 py-3 w-56 min-w-[200px]">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow text-lg">
+            ⚡
+          </span>
+          <span className="font-semibold text-blue-700 text-base">
+            ETH Wallet
+          </span>
+        </div>
         <ConnectButton.Custom>
           {({
             account,
@@ -43,9 +47,9 @@ const EthWalletConnect: React.FC = () => {
                     return (
                       <button
                         onClick={openConnectModal}
-                        className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                        className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-3 py-1 rounded-lg text-xs font-semibold shadow hover:from-blue-500 hover:to-blue-700 transition"
                       >
-                        Connect ETH Wallet
+                        Connect
                       </button>
                     );
                   }
@@ -54,7 +58,7 @@ const EthWalletConnect: React.FC = () => {
                     return (
                       <button
                         onClick={openChainModal}
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors"
+                        className="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-semibold shadow hover:bg-red-600 transition"
                       >
                         Wrong network
                       </button>
@@ -62,32 +66,12 @@ const EthWalletConnect: React.FC = () => {
                   }
 
                   return (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={openChainModal}
-                        className="bg-white/20 text-white px-3 py-2 rounded-lg text-sm hover:bg-white/30 transition-colors"
-                      >
-                        {chain.hasIcon && (
-                          <div className="w-4 h-4 rounded-full overflow-hidden inline-block mr-1">
-                            {chain.iconUrl && (
-                              <img
-                                alt={chain.name ?? "Chain icon"}
-                                src={chain.iconUrl}
-                                className="w-4 h-4"
-                              />
-                            )}
-                          </div>
-                        )}
-                        {chain.name}
-                      </button>
-
-                      <button
-                        onClick={openAccountModal}
-                        className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-                      >
-                        {account.displayName}
-                      </button>
-                    </div>
+                    <button
+                      onClick={openAccountModal}
+                      className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-xs font-semibold border border-blue-200 hover:bg-blue-100 transition"
+                    >
+                      {account.displayName}
+                    </button>
                   );
                 })()}
               </div>
@@ -97,25 +81,25 @@ const EthWalletConnect: React.FC = () => {
       </div>
 
       {isConnected && (
-        <div className="space-y-3">
-          <div className="bg-white/20 p-4 rounded-lg">
-            <p className="text-sm opacity-80 mb-1">Address</p>
-            <p className="font-mono text-sm">
+        <div className="space-y-2 mt-2">
+          <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-2 py-1">
+            <span className="text-xs text-blue-600 font-medium">Wallet:</span>
+            <span className="font-mono text-xs text-gray-700">
               {address?.slice(0, 6)}...{address?.slice(-4)}
-            </p>
+            </span>
           </div>
 
-          <div className="bg-white/20 p-4 rounded-lg">
-            <p className="text-sm opacity-80 mb-1">ETH Balance</p>
+          <div className="flex items-center gap-2 bg-blue-100 rounded-lg px-2 py-1">
+            <span className="text-xs text-blue-700 font-medium">Balance:</span>
             {isLoading ? (
-              <p className="text-lg font-semibold">Loading...</p>
+              <span className="text-xs text-gray-400">Loading...</span>
             ) : (
-              <p className="text-2xl font-bold">
+              <span className="font-bold text-xs text-blue-900">
                 {ethBalance
                   ? parseFloat(ethBalance.formatted).toFixed(4)
                   : "0.0000"}{" "}
                 ETH
-              </p>
+              </span>
             )}
           </div>
         </div>

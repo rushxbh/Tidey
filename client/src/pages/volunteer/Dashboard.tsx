@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users, Coins, Trophy, TrendingUp, BarChart3, ExternalLink, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
-
+import WalletDashboard from '../../components/WalletDashboard';
 interface Event {
   _id: string;
   title: string;
@@ -178,20 +178,17 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Volunteer Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Volunteer Dashboard
+        </h1>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-ocean-50 px-4 py-2 rounded-lg">
             <Coins className="h-5 w-5 text-ocean-600" />
-            <span className="font-semibold text-ocean-800">{userStats.aquaCoins} AquaCoins</span>
+            <span className="font-semibold text-ocean-800">
+              {userStats.aquaCoins} AquaCoins
+            </span>
           </div>
-          {!user?.walletConnected && (
-            <button
-              onClick={handleConnectWallet}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Connect Wallet
-            </button>
-          )}
+          <WalletDashboard />
         </div>
       </div>
 
@@ -210,7 +207,9 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Events Joined</p>
-              <p className="text-2xl font-bold text-gray-900">{userStats.eventsJoined}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {userStats.eventsJoined}
+              </p>
             </div>
           </div>
         </div>
@@ -221,8 +220,12 @@ const Dashboard: React.FC = () => {
               <Users className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Hours Volunteered</p>
-              <p className="text-2xl font-bold text-gray-900">{userStats.totalHours}</p>
+              <p className="text-sm font-medium text-gray-600">
+                Hours Volunteered
+              </p>
+              <p className="text-2xl font-bold text-gray-900">
+                {userStats.totalHours}
+              </p>
             </div>
           </div>
         </div>
@@ -234,7 +237,9 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Achievements</p>
-              <p className="text-2xl font-bold text-gray-900">{userStats.achievements}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {userStats.achievements}
+              </p>
             </div>
           </div>
         </div>
@@ -246,7 +251,9 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">AquaCoins</p>
-              <p className="text-2xl font-bold text-gray-900">{userStats.aquaCoins}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {userStats.aquaCoins}
+              </p>
             </div>
           </div>
         </div>
@@ -254,13 +261,15 @@ const Dashboard: React.FC = () => {
 
       {/* My Registered Events */}
       <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">My Registered Events</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          My Registered Events
+        </h2>
         {registeredEvents.length === 0 ? (
           <div className="text-center py-8">
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">No registered events</p>
-            <button 
-              onClick={() => window.location.href = '/volunteer/events'}
+            <button
+              onClick={() => (window.location.href = "/volunteer/events")}
               className="mt-2 btn-primary"
             >
               Browse Events
@@ -271,15 +280,21 @@ const Dashboard: React.FC = () => {
             {registeredEvents.map((event) => {
               const attendance = attendances[event._id];
               return (
-                <div key={event._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div
+                  key={event._id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center space-x-4">
                     <div className="p-2 bg-primary-100 rounded-lg">
                       <MapPin className="h-5 w-5 text-primary-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{event.title}</h3>
+                      <h3 className="font-semibold text-gray-900">
+                        {event.title}
+                      </h3>
                       <p className="text-sm text-gray-600">
-                        {new Date(event.date).toLocaleDateString()} • {event.startTime} - {event.endTime}
+                        {new Date(event.date).toLocaleDateString()} •{" "}
+                        {event.startTime} - {event.endTime}
                       </p>
                       <div className="flex items-center space-x-2">
                         <a
@@ -293,29 +308,38 @@ const Dashboard: React.FC = () => {
                         </a>
                       </div>
                       <p className="text-xs text-gray-500">
-                        {event.currentParticipants}/{event.maxParticipants} participants
+                        {event.currentParticipants}/{event.maxParticipants}{" "}
+                        participants
                       </p>
                       {attendance && (
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
-                          attendance.status === 'checked-out' ? 'bg-green-100 text-green-800' :
-                          attendance.status === 'checked-in' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {attendance.status === 'checked-out' ? `Completed (${attendance.hoursWorked || 0}h)` :
-                           attendance.status === 'checked-in' ? 'Checked In' : 'Registered'}
+                        <span
+                          className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
+                            attendance.status === "checked-out"
+                              ? "bg-green-100 text-green-800"
+                              : attendance.status === "checked-in"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {attendance.status === "checked-out"
+                            ? `Completed (${attendance.hoursWorked || 0}h)`
+                            : attendance.status === "checked-in"
+                            ? "Checked In"
+                            : "Registered"}
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {event.status === 'upcoming' && attendance?.status === 'registered' && (
-                      <button
-                        onClick={() => handleUnregister(event._id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-                      >
-                        Unregister
-                      </button>
-                    )}
+                    {event.status === "upcoming" &&
+                      attendance?.status === "registered" && (
+                        <button
+                          onClick={() => handleUnregister(event._id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Unregister
+                        </button>
+                      )}
                   </div>
                 </div>
               );
@@ -326,30 +350,43 @@ const Dashboard: React.FC = () => {
 
       {/* Beach Health Index */}
       <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Beach Health Index</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          Beach Health Index
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {beachHealthData.map((beach, index) => (
             <div key={index} className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">{beach.location}</h3>
+                <h3 className="font-semibold text-gray-900">
+                  {beach.location}
+                </h3>
                 <BarChart3 className="h-5 w-5 text-gray-400" />
               </div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-600">Health Score</span>
-                <span className={`px-2 py-1 rounded-full text-sm font-medium ${getScoreColor(beach.score)}`}>
+                <span
+                  className={`px-2 py-1 rounded-full text-sm font-medium ${getScoreColor(
+                    beach.score
+                  )}`}
+                >
                   {beach.score}/100
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className={`h-2 rounded-full ${
-                    beach.score >= 80 ? 'bg-green-500' :
-                    beach.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                    beach.score >= 80
+                      ? "bg-green-500"
+                      : beach.score >= 60
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
                   }`}
                   style={{ width: `${beach.score}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-gray-500 mt-2">Updated {beach.lastUpdated}</p>
+              <p className="text-xs text-gray-500 mt-2">
+                Updated {beach.lastUpdated}
+              </p>
             </div>
           ))}
         </div>
@@ -357,13 +394,17 @@ const Dashboard: React.FC = () => {
 
       {/* Recent Achievements */}
       <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Achievements</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          Recent Achievements
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
             <Trophy className="h-8 w-8 text-yellow-600" />
             <div>
               <h3 className="font-semibold text-gray-900">First Cleanup</h3>
-              <p className="text-sm text-gray-600">Completed your first event</p>
+              <p className="text-sm text-gray-600">
+                Completed your first event
+              </p>
             </div>
           </div>
 
@@ -390,16 +431,21 @@ const Dashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Connect Your Wallet</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Connect Your Wallet
+              </h2>
               <button
                 onClick={() => setShowWalletPrompt(false)}
                 className="text-gray-400 hover:text-gray-600"
+                aria-label="Close wallet connection prompt"
+                title="Close"
               >
                 <X className="h-6 w-6" />
               </button>
             </div>
             <p className="text-gray-600 mb-6">
-              Connect your MetaMask wallet to receive AquaCoins directly when you complete events and achievements!
+              Connect your MetaMask wallet to receive AquaCoins directly when
+              you complete events and achievements!
             </p>
             <div className="flex items-center justify-end space-x-3">
               <button
