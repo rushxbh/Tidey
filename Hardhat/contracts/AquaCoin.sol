@@ -20,8 +20,8 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 contract AquaCoin is ERC20, Ownable, Pausable, ERC20Burnable {
     // ============ State Variables ============
 
-    /// @notice Maximum supply of AquaCoin tokens (100 million tokens)
-    uint256 public constant MAX_SUPPLY = 100_000_000 * 10 ** 18;
+    /// @notice Maximum supply of AquaCoin tokens (10K tokens)
+    uint256 public constant MAX_SUPPLY = 100_000 * 10 ** 18;
 
     /// @notice Total tokens minted (tracked separately from totalSupply for burned tokens)
     uint256 public totalMinted;
@@ -54,7 +54,7 @@ contract AquaCoin is ERC20, Ownable, Pausable, ERC20Burnable {
         address initialOwner
     ) ERC20("AquaCoin", "AQUA") Ownable(initialOwner) {
         // Mint initial supply to the owner for distribution
-        uint256 initialSupply = 1_000_000 * 10 ** 18; // 1 million tokens
+        uint256 initialSupply = 10000 * 10 ** 18; // 10k tokens
         _mint(initialOwner, initialSupply);
         totalMinted = initialSupply;
 
@@ -271,7 +271,12 @@ contract AquaCoin is ERC20, Ownable, Pausable, ERC20Burnable {
     }
 
     // ============ Override Functions ============
-
+  /**
+     * @dev Override decimals to set token decimals to 6
+     */
+    function decimals() public pure override returns (uint8) {
+        return 4;
+    }
     /**
      * @dev Override burn to update totalMinted tracking
      */

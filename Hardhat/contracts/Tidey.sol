@@ -392,7 +392,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
     ) external onlyAdminOrOwner whenNotPaused nonReentrant {
         require(_taskId > 0 && _taskId <= totalTasks, "Tidey: Invalid task ID");
         require(
-            block.timestamp > tasks[_taskId].endTime,
+            block.timestamp > tasks[_taskId].endTime || tasks[_taskId].isActive==false,
             "Tidey: Task has not ended yet"
         );
         require(

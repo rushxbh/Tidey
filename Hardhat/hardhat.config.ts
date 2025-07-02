@@ -21,7 +21,7 @@ const config = {
     },
   },
   typechain: {
-    outDir: "../src/generated", // Output to React app
+    outDir: "../server/src/generated", // Output to React app
     target: "ethers-v5",
   },
 } as HardhatUserConfig & { typechain?: any };

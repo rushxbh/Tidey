@@ -23,7 +23,15 @@ async function main() {
   console.log(`Tidey deployed to: ${tideyAddress}`);
 
   // 3. Save addresses for frontend
-  const contractsDir = path.join(__dirname, "..", "..", "src", "contracts");
+  const contractsDir = path.join(
+    __dirname,
+    "..",
+    "..",
+    "server",
+    "src",
+    "contracts"
+  );
+  console.log("Saving config to:", contractsDir); // Add this line
   if (!fs.existsSync(contractsDir)) {
     fs.mkdirSync(contractsDir, { recursive: true });
   }
@@ -42,7 +50,7 @@ export const NETWORK_CONFIG = {
 
   fs.writeFileSync(path.join(contractsDir, "config.ts"), contractConfig);
 
-  console.log("✅ Contract addresses saved to src/contracts/config.ts");
+  console.log("✅ Contract addresses saved to server/src/contracts/config.ts");
 }
 
 main().catch((error) => {
