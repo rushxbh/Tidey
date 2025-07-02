@@ -27,7 +27,7 @@ async function main() {
     __dirname,
     "..",
     "..",
-    "server",
+    "client",
     "src",
     "contracts"
   );

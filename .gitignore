@@ -29,3 +29,5 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln  
+# Ignore generated client code
+client/src/generated

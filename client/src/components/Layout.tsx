@@ -91,6 +91,7 @@ const Layout: React.FC<LayoutProps> = ({ requiredRole }) => {
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
+            title="Close sidebar"
           >
             <X className="h-6 w-6" />
           </button>
@@ -155,6 +156,7 @@ const Layout: React.FC<LayoutProps> = ({ requiredRole }) => {
             <button
               onClick={() => setSidebarOpen(true)}
               className="p-2 rounded-md text-gray-400 hover:text-gray-600"
+              title="Open sidebar"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -177,6 +179,7 @@ const Layout: React.FC<LayoutProps> = ({ requiredRole }) => {
         <button
           onClick={() => setShowChatbot(true)}
           className="bg-primary-600 hover:bg-primary-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+          title="Open Chatbot"
         >
           <MessageCircle className="h-6 w-6" />
         </button>
