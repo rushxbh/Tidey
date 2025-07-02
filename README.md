@@ -1,54 +1,227 @@
-# Tidey
+# Tidey - Beach Cleanup Platform
 
-## About This Project
+A comprehensive full-stack web application for organizing and managing beach cleanup events with volunteer engagement and gamification features.
 
-**Tidey** is a blockchain-powered, gamified platform for beach conservation. It transforms beach cleanup initiatives through technology-driven engagement and transparent impact tracking, serving as a central hub that connects environmental volunteers, NGOs, and coastal communities. Tidey coordinates large-scale cleanup efforts and addresses the fragmentation in current sustainability initiatives.
+## 🌊 Features
 
+### For Volunteers
+- **Event Discovery**: Browse and register for beach cleanup events
+- **Real-time Participation**: Join live events with QR code scanning
+- **Impact Tracking**: Monitor personal contribution metrics
+- **Gamification**: Earn AquaCoins and unlock achievements
+- **Rewards Store**: Redeem coins for merchandise and experiences
+- **Profile Management**: Track progress and view statistics
+   
+### For NGOs
+- **Event Management**: Create, update, and manage cleanup events
+- **Volunteer Coordination**: Track registrations and attendance
+- **Impact Analytics**: Monitor waste collection and beach health scores
+- **Communication Tools**: Engage with volunteer community
 
+### Technical Features
+- **Authentication**: JWT-based secure login/registration
+- **Real-time Updates**: Live event status and participation
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
+- **Database Integration**: MongoDB with comprehensive schemas
+- **API Architecture**: RESTful endpoints with validation
+- **Error Handling**: Comprehensive error management
 
-## Our Approach
-Tidey provides a unified ecosystem where volunteers can discover nearby events, track their personal environmental contributions, and receive blockchain-verified recognition as proof of environment and impact. The platform combines real-time beach health monitoring with intelligent volunteer matching algorithms, ensuring optimal resource allocation and maximum environmental impact.
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js (v18 or higher)
+- MongoDB (local or cloud instance)
+- npm or yarn
+
+### Installation
+
+1. **Clone and install dependencies**
+```bash
+git clone <repository-url>
+cd tidey-platform
+npm run install:all
+```
+
+2. **Environment Setup**
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Update MongoDB connection string and other variables
+# MONGODB_URI=mongodb://localhost:27017/tidey
+# JWT_SECRET=your-super-secret-jwt-key
+```
+
+3. **Start Development Servers**
+```bash
+# Run both client and server concurrently
+npm run dev
+
+# Or run separately
+npm run client:dev  # Frontend on http://localhost:5173
+npm run server:dev  # Backend on http://localhost:3001
+```
+
+## 📁 Project Structure
+
+```
+tidey-platform/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── contexts/       # React contexts (Auth, etc.)
+│   │   ├── pages/          # Page components
+│   │   │   ├── volunteer/  # Volunteer-specific pages
+│   │   │   └── ngo/        # NGO-specific pages
+│   │   └── main.tsx        # App entry point
+│   ├── public/             # Static assets
+│   └── package.json
+├── server/                 # Express backend
+│   ├── src/
+│   │   ├── models/         # MongoDB schemas
+│   │   ├── routes/         # API endpoints
+│   │   ├── middleware/     # Custom middleware
+│   │   ├── config/         # Configuration files
+│   │   └── server.ts       # Server entry point
+│   └── package.json
+├── .env                    # Environment variables
+└── package.json           # Root package.json
+```
+
+## 🗄️ Database Schemas
+
+### Core Models
+- **User**: Volunteer and NGO profiles with role-based fields
+- **Event**: Beach cleanup events with status tracking
+- **Attendance**: QR-based check-in/check-out records
+- **WasteLog**: Waste collection data with geolocation
+- **BeachHealthScore**: ML-calculated beach health metrics
+
+### Gamification Models
+- **Reward**: AquaStore items and experiences
+- **Achievement**: Milestone tracking and NFT integration
+- **Leaderboard**: Cached ranking system
+
+### Analytics Models
+- **ChatLog**: AI chatbot interaction history
+- **EmailTemplate**: Automated communication templates
+
+## 🔧 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Get current user
+- `PUT /api/auth/profile` - Update profile
+
+### Events
+- `GET /api/events` - List events with filters
+- `GET /api/events/:id` - Get event details
+- `POST /api/events` - Create event (NGO only)
+- `POST /api/events/:id/register` - Register for event
+- `PUT /api/events/:id` - Update event (NGO only)
+- `DELETE /api/events/:id` - Delete event (NGO only)
+
+### Rewards
+- `GET /api/rewards` - List rewards
+- `GET /api/rewards/:id` - Get reward details
+- `POST /api/rewards/:id/redeem` - Redeem reward
+
+### Users
+- `GET /api/users/profile` - Get user profile
+- `GET /api/users/volunteers` - List volunteers (NGO)
+- `GET /api/users/stats` - Get user statistics
+
+## 🎨 Design System
+
+### Colors
+- **Primary**: Ocean blue (#0ea5e9 to #0c4a6e)
+- **Ocean**: Teal accent (#14b8a6 to #134e4a)
+- **Success**: Green (#10b981)
+- **Warning**: Yellow (#f59e0b)
+- **Error**: Red (#ef4444)
+
+### Typography
+- **Font**: Inter (Google Fonts)
+- **Weights**: 300, 400, 500, 600, 700
+- **Line Height**: 150% body, 120% headings
+
+### Components
+- **Cards**: Rounded corners, subtle shadows
+- **Buttons**: Primary/secondary variants with hover states
+- **Forms**: Consistent input styling with validation
+- **Navigation**: Clean sidebar with active states
+
+## 🔐 Security Features
+
+- **JWT Authentication**: Secure token-based auth
+- **Password Hashing**: bcrypt with salt rounds
+- **Rate Limiting**: API request throttling
+- **CORS Protection**: Cross-origin request handling
+- **Helmet**: Security headers
+- **Input Validation**: Server-side validation with express-validator
+
+## 🚀 Deployment
+
+### Production Build
+```bash
+# Build both client and server
+npm run client:build
+npm run server:build
+
+# Start production servers
+npm start
+```
+
+### Environment Variables (Production)
+```bash
+NODE_ENV=production
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/tidey
+JWT_SECRET=your-production-secret-key
+CLIENT_URL=https://your-domain.com
+```
+
+## 🧪 Testing
+
+```bash
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+## 📈 Future Enhancements
+
+### Planned Features
+- **Mobile App**: React Native implementation
+- **AI Integration**: LangChain chatbot and D-ID avatars
+- **Blockchain**: NFT achievements and token rewards
+- **ML Analytics**: Beach health scoring algorithms
+- **Real-time Chat**: Event communication system
+- **Payment Integration**: Donation and premium features
+
+### Technical Improvements
+- **Microservices**: Service decomposition
+- **Caching**: Redis implementation
+- **CDN**: Asset delivery optimization
+- **Monitoring**: Application performance tracking
+- **CI/CD**: Automated deployment pipeline
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-## System Architecture
 
-Architecture diagram above for a high-level overview of Tidey's system workflow.
-![Tidey Architecture Diagram](Demo/ArchitecureDiagram.png)
+**Built with ❤️ for ocean conservation**
 
----
-## Core Features
-
-### 1. Beach Health Map System
-- Visual representation of beach cleanliness levels (0-100 rating scale)
-- Color-coded mapping to prioritize cleanup efforts based on pollution severity
-- Real-time updates based on volunteer contributions and waste data
-- Predictive analytics for resource deployment optimization
-- Health score for each beach is ML-estimated using past cleanup volumes, waste-type ratios, and recency of activity
-
-### 2. Smart Volunteer Management
-- Deterministic scoring algorithm for beach assignment based on proximity and interests
-- QR code-based check-in system for attendance verification
-- Automated email notifications and event reminders
-- Role-based access control for volunteers, coordinators, and administrators
-- Avatar-based chatbot with volunteer FAQs for onboarding, guidance, and multilingual support
-
-### 3. Waste & Impact Analytics
-- Category-wise waste logging (Plastic, Metal, Glass, Organic)
-- Geo-tagged data collection with volume/weight estimation
-- Real-time dashboard with interactive charts and visualizations
-- Exportable reports for NGOs and environmental agencies
-- Automated post-event email outreach using pre-generated templates and dynamic event-specific injection
-
-### 4. Gamification & TideyCoin Reward using Blockchain
-- ERC-20 tokens on Polygon for low-cost, transparent NFT certificates for 10 environmental milestones
-- Achievement system with prestige levels for ongoing engagement
-- Real-time leaderboards and blockchain-verified badges to showcase achievements
-- Referral program with bonus TideyCoins to boost community growth
-- Redeem TideyCoins for eco-friendly rewards via the AquaStore
-
----
-
-
-## Get Involved
-
-Join us in making a measurable impact on Mumbai's beaches. Whether you're a volunteer, NGO, or community leader, Tidey empowers you to drive real environmental change
+For questions or support, please open an issue or contact the development team.
