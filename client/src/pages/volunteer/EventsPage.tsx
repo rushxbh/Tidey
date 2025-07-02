@@ -304,6 +304,7 @@ const EventsPage: React.FC = () => {
                 setPage(1);
               }}
               className="input-field"
+              aria-label="Filter events by status"
             >
               <option value="all">All Events</option>
               <option value="upcoming">Upcoming</option>
@@ -581,6 +582,8 @@ const ImageUploadModal: React.FC<{
               accept="image/*"
               onChange={(e) => handleImageAdd(e.target.files)}
               className="input-field"
+              title="Select images to upload"
+              placeholder="Select images"
             />
           </div>
 
@@ -604,7 +607,11 @@ const ImageUploadModal: React.FC<{
                     }}
                     className="input-field mb-2"
                   />
+                  <label htmlFor={`beforeAfter-select-${index}`} className="sr-only">
+                    Select before or after cleanup
+                  </label>
                   <select
+                    id={`beforeAfter-select-${index}`}
                     value={beforeAfter[index]}
                     onChange={(e) => {
                       const newBeforeAfter = [...beforeAfter];

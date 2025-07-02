@@ -26,6 +26,13 @@ A comprehensive full-stack web application for organizing and managing beach cle
 - **API Architecture**: RESTful endpoints with validation
 - **Error Handling**: Comprehensive error management
 
+## System Architecture
+
+Architecture diagram above for a high-level overview of Tidey's system workflow.
+![Tidey Architecture Diagram](Demo/ArchitecureDiagram.png)
+
+
+
 ## 🚀 Quick Start
 
 ### Prerequisites
