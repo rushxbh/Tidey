@@ -38,7 +38,6 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedEventImages, setSelectedEventImages] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -81,8 +80,8 @@ const Dashboard: React.FC = () => {
 
   const handleViewEventImages = async (eventId: string) => {
     try {
-      const response = await axios.get(`/api/event-images/event/${eventId}`);
-      setSelectedEventImages(eventId);
+      // Removed: const response = await axios.get(`/api/event-images/event/${eventId}`);
+      // setSelectedEventImages(eventId);
       // You can implement a modal to show images here
     } catch (err: any) {
       console.error('Error fetching event images:', err);
@@ -307,12 +306,14 @@ const Dashboard: React.FC = () => {
                   <button
                     onClick={() => window.location.href = `/ngo/events/${event._id}/edit`}
                     className="p-2 text-gray-400 hover:text-gray-600"
+                    title="Edit Event"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteEvent(event._id)}
                     className="p-2 text-gray-400 hover:text-red-600"
+                    title="Delete Event"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -444,7 +445,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900">Create New Event</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600" title="Close">
               <Plus className="h-6 w-6 rotate-45" />
             </button>
           </div>
@@ -466,6 +467,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   onChange={handleInputChange}
                   className="input-field"
                   required
+                  placeholder="Enter event title"
                 />
               </div>
 
@@ -478,6 +480,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   className="input-field"
                   rows={3}
                   required
+                  placeholder="Describe the event"
                 />
               </div>
 
@@ -502,6 +505,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   value={formData.locationAddress}
                   onChange={handleInputChange}
                   className="input-field"
+                  placeholder="Enter address"
                   required
                 />
               </div>
@@ -516,6 +520,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   className="input-field"
                   min={new Date().toISOString().split('T')[0]}
                   required
+                  placeholder="Select date"
                 />
               </div>
 
@@ -530,6 +535,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   min="1"
                   max="1000"
                   required
+                  placeholder="Max participants"
                 />
               </div>
 
@@ -542,6 +548,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   onChange={handleInputChange}
                   className="input-field"
                   required
+                  placeholder="Start time"
                 />
               </div>
 
@@ -554,6 +561,7 @@ const CreateEventModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
                   onChange={handleInputChange}
                   className="input-field"
                   required
+                  placeholder="End time"
                 />
               </div>
 

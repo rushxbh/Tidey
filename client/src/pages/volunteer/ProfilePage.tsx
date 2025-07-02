@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, Coins, Camera } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Coins, Camera, Copy } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
+import { useAccount, useReadContract } from "wagmi";
+import { AQUACOIN_ADDRESS } from '../../contracts/config';
 
 interface UserStats {
   eventsJoined: number;
   totalHours: number;
-  aquaCoins: number;
   achievements: number;
 }
 
@@ -23,7 +24,6 @@ const ProfilePage: React.FC = () => {
   const [userStats, setUserStats] = useState<UserStats>({
     eventsJoined: 0,
     totalHours: 0,
-    aquaCoins: 0,
     achievements: 0
   });
   const [loading, setLoading] = useState(false);
@@ -90,6 +90,73 @@ const ProfilePage: React.FC = () => {
     { name: 'Eco Champion', description: 'Volunteered for 50+ hours', icon: '♻️', earned: userStats.totalHours >= 50 }
   ];
 
+  // AquaCoin contract logic
+  const { address, isConnected } = useAccount();
+  const { data: tokenBalance, isLoading: balanceLoading } = useReadContract({
+    address: AQUACOIN_ADDRESS,
+    abi: [
+      {
+        name: "balanceOf",
+        type: "function",
+        stateMutability: "view",
+        inputs: [{ name: "account", type: "address" }],
+        outputs: [{ name: "", type: "uint256" }],
+      },
+      {
+        name: "symbol",
+        type: "function",
+        stateMutability: "view",
+        inputs: [],
+        outputs: [{ name: "", type: "string" }],
+      },
+      {
+        name: "decimals",
+        type: "function",
+        stateMutability: "view",
+        inputs: [],
+        outputs: [{ name: "", type: "uint8" }],
+      },
+    ] as const,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+  });
+  const { data: tokenSymbol } = useReadContract({
+    address: AQUACOIN_ADDRESS,
+    abi: [
+      {
+        name: "symbol",
+        type: "function",
+        stateMutability: "view",
+        inputs: [],
+        outputs: [{ name: "", type: "string" }],
+      },
+    ] as const,
+    functionName: "symbol",
+  });
+  const { data: tokenDecimals } = useReadContract({
+    address: AQUACOIN_ADDRESS,
+    abi: [
+      {
+        name: "decimals",
+        type: "function",
+        stateMutability: "view",
+        inputs: [],
+        outputs: [{ name: "", type: "uint8" }],
+      },
+    ] as const,
+    functionName: "decimals",
+  });
+
+  const formatTokenBalance = (
+    balance: bigint | undefined,
+    decimals: number | undefined
+  ) => {
+    if (!balance || decimals === undefined) return "0.00";
+    const divisor = BigInt(10 ** decimals);
+    const formatted = Number(balance) / Number(divisor);
+    return formatted.toFixed(2);
+  };
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -151,7 +218,37 @@ const ProfilePage: React.FC = () => {
                 <p className="text-gray-600">Volunteer</p>
                 <div className="flex items-center mt-2">
                   <Coins className="h-4 w-4 text-ocean-600 mr-1" />
-                  <span className="text-ocean-600 font-semibold">{userStats.aquaCoins} AquaCoins</span>
+                  {/* AquaCoin balance from contract */}
+                  {isConnected ? (
+                    balanceLoading ? (
+                      <span className="text-ocean-600 font-semibold">Loading...</span>
+                    ) : (
+                      <span className="text-ocean-600 font-semibold flex items-center gap-1">
+                        {formatTokenBalance(
+                          tokenBalance as bigint,
+                          tokenDecimals as number
+                        )}{" "}
+                        {tokenSymbol || "AQUA"}
+                        <button
+                          className="ml-1 p-1 rounded hover:bg-ocean-100"
+                          title="Copy balance"
+                          onClick={() =>
+                            navigator.clipboard.writeText(
+                              `${formatTokenBalance(
+                                tokenBalance as bigint,
+                                tokenDecimals as number
+                              )} ${tokenSymbol || "AQUA"}`
+                            )
+                          }
+                          type="button"
+                        >
+                          <Copy className="w-3 h-3 text-ocean-600" />
+                        </button>
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-ocean-600 font-semibold">Connect Wallet</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -293,7 +390,37 @@ const ProfilePage: React.FC = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">AquaCoins Earned</span>
-                <span className="font-semibold text-gray-900">{userStats.aquaCoins}</span>
+                {/* AquaCoin balance from contract */}
+                {isConnected ? (
+                  balanceLoading ? (
+                    <span className="font-semibold text-gray-900">Loading...</span>
+                  ) : (
+                    <span className="font-semibold text-gray-900 flex items-center gap-1">
+                      {formatTokenBalance(
+                        tokenBalance as bigint,
+                        tokenDecimals as number
+                      )}{" "}
+                      {tokenSymbol || "AQUA"}
+                      <button
+                        className="ml-1 p-1 rounded hover:bg-ocean-100"
+                        title="Copy balance"
+                        onClick={() =>
+                          navigator.clipboard.writeText(
+                            `${formatTokenBalance(
+                              tokenBalance as bigint,
+                              tokenDecimals as number
+                            )} ${tokenSymbol || "AQUA"}`
+                          )
+                        }
+                        type="button"
+                      >
+                        <Copy className="w-3 h-3 text-ocean-600" />
+                      </button>
+                    </span>
+                  )
+                ) : (
+                  <span className="font-semibold text-gray-900">Connect Wallet</span>
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Achievements</span>
@@ -307,7 +434,37 @@ const ProfilePage: React.FC = () => {
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
                 <Coins className="h-8 w-8 text-ocean-600 mr-2" />
-                <span className="text-3xl font-bold text-ocean-600">{userStats.aquaCoins}</span>
+                {/* AquaCoin balance from contract */}
+                {isConnected ? (
+                  balanceLoading ? (
+                    <span className="text-3xl font-bold text-ocean-600">Loading...</span>
+                  ) : (
+                    <span className="text-3xl font-bold text-ocean-600 flex items-center gap-1">
+                      {formatTokenBalance(
+                        tokenBalance as bigint,
+                        tokenDecimals as number
+                      )}{" "}
+                      {tokenSymbol || "AQUA"}
+                      <button
+                        className="ml-1 p-1 rounded hover:bg-ocean-100"
+                        title="Copy balance"
+                        onClick={() =>
+                          navigator.clipboard.writeText(
+                            `${formatTokenBalance(
+                              tokenBalance as bigint,
+                              tokenDecimals as number
+                            )} ${tokenSymbol || "AQUA"}`
+                          )
+                        }
+                        type="button"
+                      >
+                        <Copy className="w-4 h-4 text-ocean-600" />
+                      </button>
+                    </span>
+                  )
+                ) : (
+                  <span className="text-3xl font-bold text-ocean-600">Connect Wallet</span>
+                )}
               </div>
               <p className="text-sm text-gray-600 mb-4">Available for rewards</p>
               <button className="w-full btn-primary">

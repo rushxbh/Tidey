@@ -1,7 +1,7 @@
 import React from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useReadContract } from "wagmi";
-import { AQUACOIN_ADDRESS } from "../contracts/config"; // Import your address
+import { AQUACOIN_ADDRESS } from "../../contracts/config"; // Import your address
 import { Copy } from "lucide-react";
 
 // Use your AQUACOIN address
