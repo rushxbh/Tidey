@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Calendar, Coins, Camera, Copy } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useBalanceOfAQUA } from '../../hooks/useAquaCoin';
 import axios from 'axios';
+import { useAccount } from 'wagmi';
+import { useFetchAQUA } from '../../hooks/fetchAQUA';
 interface UserStats {
   eventsJoined: number;
   totalHours: number;
@@ -9,8 +12,9 @@ interface UserStats {
 }
 
 const ProfilePage: React.FC = () => {
+  const {address} = useAccount();
   const tokenDecimals = 4;
-  const { user} = useAuth();
+  const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
     name: user?.name || '',
@@ -28,10 +32,14 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const tokenSymbol = user?.AQUASymbol || "AQUA"; // Default to "AQUA" if undefined
-const isConnected = user?.walletConnected || false; // Default to false if undefined
-const tokenBalance = user?.AQUABalance ?? 0; // Default to 0 if undefined
-const balanceLoading = typeof user?.AQUABalance === "undefined"; // Check if balance is undefined
+
+  useFetchAQUA(setError);
+
+  const tokenSymbol = user?.AQUASymbol || "AQUA";
+  const isConnected = user?.walletConnected || false;
+  const tokenBalance = user?.AQUABalance ?? 0;
+  const balanceLoading = typeof user?.AQUABalance === "undefined";
+
 
   useEffect(() => {
     fetchUserStats();

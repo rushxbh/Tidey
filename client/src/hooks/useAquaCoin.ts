@@ -32,6 +32,9 @@ export function useBalanceOfAQUA() {
     abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
+    query: {
+      enabled: !!address,
+    },
   });
 
   const { data: tokenSymbol, isLoading: symbolLoading } = useReadContract({

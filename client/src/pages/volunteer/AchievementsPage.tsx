@@ -3,6 +3,7 @@ import { Trophy, Coins, Star, Target, Award, Gift, Copy } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
 import { useAccount } from "wagmi";
+import { useFetchAQUA } from "../../hooks/fetchAQUA";
 
 interface Achievement {
   _id: string;
@@ -28,20 +29,29 @@ interface Achievement {
 }
 
 const AchievementsPage: React.FC = () => {
-  const { user } = useAuth();
-  const {address}=useAccount();
+  const { user, updateUser } = useAuth();
+  const { address } = useAccount();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [completedAchievements, setCompletedAchievements] = useState<Achievement[]>([]);
+  const [completedAchievements, setCompletedAchievements] = useState<
+    Achievement[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "completed">("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  
+
   // Track which achievements have been unlocked by token balance (stored in localStorage)
-  const [tokenAchievements, setTokenAchievements] = useState<{ [id: string]: boolean }>({});
+  const [tokenAchievements, setTokenAchievements] = useState<{
+    [id: string]: boolean;
+  }>({});
 
-  
+  useFetchAQUA(setError);
 
+  const tokenBalance = user?.AQUABalance ?? 0;
+  const tokenSymbol = user?.AQUASymbol || "AQUA";
+  const tokenDecimals = user?.AQUADecimal ?? 4;
+  const isConnected = user?.walletConnected || false;
+  const balanceLoading = typeof user?.AQUABalance === "undefined";
   const formatTokenBalance = (
     balance: bigint | undefined,
     decimals: number | undefined
@@ -51,11 +61,6 @@ const AchievementsPage: React.FC = () => {
     const formatted = Number(balance) / Number(divisor);
     return formatted;
   };
-  const tokenBalance = user?.AQUABalance ?? 0;
-  const tokenSymbol = user?.AQUASymbol || "AQUA";
-  const tokenDecimals = user?.AQUADecimal ?? 4;
-  const isConnected = user?.walletConnected || false;
-  const balanceLoading = typeof user?.AQUABalance === "undefined";
 
   // Load token achievements from localStorage
   useEffect(() => {
@@ -70,7 +75,10 @@ const AchievementsPage: React.FC = () => {
   // Save token achievements to localStorage
   const saveTokenAchievements = (achievements: { [id: string]: boolean }) => {
     if (address) {
-      localStorage.setItem(`tokenAchievements_${address}`, JSON.stringify(achievements));
+      localStorage.setItem(
+        `tokenAchievements_${address}`,
+        JSON.stringify(achievements)
+      );
       setTokenAchievements(achievements);
     }
   };
@@ -82,19 +90,23 @@ const AchievementsPage: React.FC = () => {
 
   // Check token-based achievements after fetching achievements and balance
   useEffect(() => {
-    if (!achievements.length || tokenDecimals === undefined || !isConnected) return;
+    if (!achievements.length || tokenDecimals === undefined || !isConnected)
+      return;
 
     const updated: { [id: string]: boolean } = { ...tokenAchievements };
     const balance = formatTokenBalance(
-      BigInt(tokenBalance?.toString() || "0"), 
+      BigInt(tokenBalance?.toString() || "0"),
       tokenDecimals as number
     );
     let hasChanges = false;
 
     achievements.forEach((achievement) => {
       // Check if this is a token-based achievement (customize this logic based on your achievement structure)
-      const isTokenBasedAchievement = achievement.criteria.type === "custom" && 
-        (/aqua.?coin|token|balance/i.test(achievement.name + achievement.description));
+      const isTokenBasedAchievement =
+        achievement.criteria.type === "custom" &&
+        /aqua.?coin|token|balance/i.test(
+          achievement.name + achievement.description
+        );
 
       if (isTokenBasedAchievement && !updated[achievement._id]) {
         // Example criteria: unlock if balance >= 400
@@ -115,7 +127,14 @@ const AchievementsPage: React.FC = () => {
     if (hasChanges) {
       saveTokenAchievements(updated);
     }
-  }, [achievements, tokenBalance, tokenDecimals, isConnected, address, tokenAchievements]);
+  }, [
+    achievements,
+    tokenBalance,
+    tokenDecimals,
+    isConnected,
+    address,
+    tokenAchievements,
+  ]);
 
   const fetchAchievements = async () => {
     try {
@@ -206,22 +225,32 @@ const AchievementsPage: React.FC = () => {
 
   // Override achievement completion status for token-based achievements
   const getAchievementCompleted = (achievement: Achievement) => {
-    const isTokenBasedAchievement = achievement.criteria.type === "custom" && 
-      (/aqua.?coin|token|balance/i.test(achievement.name + achievement.description));
+    const isTokenBasedAchievement =
+      achievement.criteria.type === "custom" &&
+      /aqua.?coin|token|balance/i.test(
+        achievement.name + achievement.description
+      );
 
     if (isTokenBasedAchievement) {
       // If ever unlocked via token balance, always show as completed
-      return achievement.userProgress?.completed || tokenAchievements[achievement._id] || false;
+      return (
+        achievement.userProgress?.completed ||
+        tokenAchievements[achievement._id] ||
+        false
+      );
     }
-    
+
     // For other achievements, use the regular completion status
     return achievement.userProgress?.completed || false;
   };
 
   // Get progress for token-based achievements
   const getAchievementProgress = (achievement: Achievement) => {
-    const isTokenBasedAchievement = achievement.criteria.type === "custom" && 
-      (/aqua.?coin|token|balance/i.test(achievement.name + achievement.description));
+    const isTokenBasedAchievement =
+      achievement.criteria.type === "custom" &&
+      /aqua.?coin|token|balance/i.test(
+        achievement.name + achievement.description
+      );
 
     if (isTokenBasedAchievement && isConnected && tokenDecimals !== undefined) {
       const balance = formatTokenBalance(
@@ -230,7 +259,7 @@ const AchievementsPage: React.FC = () => {
       );
       return Math.min(balance, achievement.criteria.value);
     }
-    
+
     return achievement.userProgress?.progress || 0;
   };
 
@@ -432,17 +461,29 @@ const AchievementsPage: React.FC = () => {
             <div
               key={achievement._id}
               className={`card border-2 ${getRarityColor(achievement.rarity)} ${
-                getAchievementCompleted(achievement) ? "ring-2 ring-green-500" : ""
+                getAchievementCompleted(achievement)
+                  ? "ring-2 ring-green-500"
+                  : ""
               }`}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${getRarityColor(achievement.rarity)}`}>
+                  <div
+                    className={`p-2 rounded-lg ${getRarityColor(
+                      achievement.rarity
+                    )}`}
+                  >
                     {getCategoryIcon(achievement.category)}
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">{achievement.name}</h3>
-                    <p className={`text-xs font-medium ${getRarityTextColor(achievement.rarity)}`}>
+                    <h3 className="font-bold text-gray-900">
+                      {achievement.name}
+                    </h3>
+                    <p
+                      className={`text-xs font-medium ${getRarityTextColor(
+                        achievement.rarity
+                      )}`}
+                    >
                       {achievement.rarity.toUpperCase()}
                     </p>
                   </div>
@@ -454,20 +495,25 @@ const AchievementsPage: React.FC = () => {
                 )}
               </div>
 
-              <p className="text-sm text-gray-600 mb-4">{achievement.description}</p>
+              <p className="text-sm text-gray-600 mb-4">
+                {achievement.description}
+              </p>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Progress</span>
                   <span className="font-medium">
-                    {getAchievementProgress(achievement)} / {achievement.criteria.value}
+                    {getAchievementProgress(achievement)} /{" "}
+                    {achievement.criteria.value}
                   </span>
                 </div>
 
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className={`h-2 rounded-full ${
-                      getAchievementCompleted(achievement) ? "bg-green-500" : "bg-primary-600"
+                      getAchievementCompleted(achievement)
+                        ? "bg-green-500"
+                        : "bg-primary-600"
                     }`}
                     style={{ width: `${getProgressPercentage(achievement)}%` }}
                   ></div>
@@ -483,9 +529,10 @@ const AchievementsPage: React.FC = () => {
                   {getAchievementCompleted(achievement) && (
                     <span className="text-xs text-green-600 font-medium">
                       Completed
-                      {achievement.userProgress?.completedAt && 
-                        ` ${new Date(achievement.userProgress.completedAt).toLocaleDateString()}`
-                      }
+                      {achievement.userProgress?.completedAt &&
+                        ` ${new Date(
+                          achievement.userProgress.completedAt
+                        ).toLocaleDateString()}`}
                     </span>
                   )}
                 </div>

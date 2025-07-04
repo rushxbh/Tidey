@@ -3,7 +3,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
 
 export interface AuthRequest extends Request {
-  user?: IUser;
+  user?: IUser; // Extend the Request type to include the user property
 }
 
 export const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -28,7 +28,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
       });
     }
 
-    req.user = user;
+    req.user = user; // Attach the user object to the request
     next();
   } catch (error) {
     return res.status(401).json({
