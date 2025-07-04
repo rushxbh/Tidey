@@ -43,7 +43,7 @@ interface Event {
     name: string;
     organizationName?: string;
   };
- 
+
   participants: string[];
   requirements: string[];
   providedEquipment: string[];
@@ -686,7 +686,6 @@ const CreateEventModal: React.FC<{
     maxParticipants: "",
     requirements: "",
     providedEquipment: "",
-    
   });
   const [loading, setLoading] = useState(false);
   const { address: walletAddress } = useAccount();
@@ -732,7 +731,7 @@ const CreateEventModal: React.FC<{
       const title = formData.title;
       const description = formData.description;
       const location = `${formData.locationName}, ${formData.locationAddress}`;
-    
+
       const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
       const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
       const startTime = BigInt(Math.floor(startDateTime.getTime() / 1000));
@@ -743,9 +742,7 @@ const CreateEventModal: React.FC<{
           (endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60 * 60)
         )
       );
-      console.log(
-        "Starting blockchain Event registration..."
-      );
+      console.log("Starting blockchain Event registration...");
       let tx;
       try {
         tx = await writeContractAsync({
@@ -781,6 +778,15 @@ const CreateEventModal: React.FC<{
       setBlockchainRegistered(true);
 
       // Step 2: Only after blockchain success, register Event in MongoDB
+      // Calculate volunteeringHours as the floored difference in hours
+      const NewstartDateTime = new Date(
+        `${formData.date}T${formData.startTime}`
+      );
+      const NEwendDateTime = new Date(`${formData.date}T${formData.endTime}`);
+      const volunteeringHours = Math.floor(
+        (NEwendDateTime.getTime() - NewstartDateTime.getTime()) /
+          (1000 * 60 * 60)
+      );
       try {
         const eventData = {
           title: formData.title,
@@ -805,6 +811,7 @@ const CreateEventModal: React.FC<{
             .split(",")
             .map((e) => e.trim())
             .filter((e) => e),
+          volunteeringHours,
         };
 
         await axios.post("/api/events", eventData);
@@ -975,7 +982,6 @@ const CreateEventModal: React.FC<{
                   required
                 />
               </div>
-             
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
