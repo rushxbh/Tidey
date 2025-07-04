@@ -27,6 +27,7 @@ export function useTaskWrite() {
           BigInt(startTime),
           BigInt(endTime),
           BigInt(maxParticipants),
+          0n, 
         ],
       }),
     [writeContract]
