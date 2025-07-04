@@ -358,7 +358,57 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
             msg.sender
         );
     }
+    function editTask(
+        uint256 _taskId,
+        string calldata _title,
+        string calldata _description,
+        string calldata _location,
+        uint256 _taskDuration,
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _maxParticipants
+    ) external onlyAdminOrOwner whenNotPaused {
+        require(_taskId > 0 && _taskId <= totalTasks, "Tidey: Invalid task ID");
+        Task storage task = tasks[_taskId];
+        require(task.isActive, "Tidey: Task is not active");
+        require(
+            block.timestamp < task.startTime,
+            "Tidey: Cannot edit after start"
+        );
+        require(bytes(_title).length > 0, "Tidey: Title cannot be empty");
+        require(bytes(_location).length > 0, "Tidey: Location cannot be empty");
+        require(
+            _startTime > block.timestamp,
+            "Tidey: Start time must be in future"
+        );
+        require(
+            _endTime > _startTime,
+            "Tidey: End time must be after start time"
+        );
+        require(
+            _maxParticipants > 0,
+            "Tidey: Max participants must be greater than 0"
+        );
 
+        task.title = _title;
+        task.description = _description;
+        task.location = _location;
+        task.taskDuration = _taskDuration;
+        task.startTime = _startTime;
+        task.endTime = _endTime;
+        task.maxParticipants = _maxParticipants;
+
+        // Optionally emit an event for editing
+        emit TaskCreated(
+            _taskId,
+            _title,
+            _location,
+            _startTime,
+            _endTime,
+            _maxParticipants,
+            msg.sender
+        );
+    }
     /**
      * @dev Join a community service task
      * @param _taskId ID of the task to join
