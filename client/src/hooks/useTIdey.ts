@@ -5,28 +5,28 @@ import { useWriteContract, useReadContract } from "wagmi";
 
 
 export function useTideyWrite() {
-  const { writeContract, isPending, error } = useWriteContract();
+  const { writeContractAsync, isPending, error } = useWriteContract();
 
   const registerVolunteer = useCallback(
     (name: string, email: string, mobile: string) =>
-      writeContract({
+      writeContractAsync({
         address: TIDEY_ADDRESS,
         abi: TideyABI,
         functionName: "registerVolunteer",
         args: [name, email, mobile],
       }),
-    [writeContract]
+    [writeContractAsync]
   );
 
   const updateProfile = useCallback(
     (name: string, email: string, mobile: string) =>
-      writeContract({
+      writeContractAsync({
         address: TIDEY_ADDRESS,
         abi: TideyABI,
         functionName: "updateVolunteerProfile",
         args: [name, email, mobile],
       }),
-    [writeContract]
+    [writeContractAsync]
   );
 
   return { registerVolunteer, updateProfile, isPending, error };

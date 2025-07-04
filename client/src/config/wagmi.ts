@@ -21,6 +21,7 @@ export const config = getDefaultConfig({
   projectId:
     import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ||
     "b7e9e68437cb29efe5dab1b0e4034fe4",
-  chains: [localhost, sepolia],
+  // chains: [localhost, sepolia],
+  chains: [localhost],
   ssr: false,
 });

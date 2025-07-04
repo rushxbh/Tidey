@@ -87,7 +87,7 @@ router.get(
       walletAddress: user.walletAddress,
     });
 
-    const isEmpty = !user.walletAddress || user.walletAddress === "";
+    const isEmpty = !user.walletAddress?.trim();
     console.log(`[is-wallet-empty] isEmpty: ${isEmpty}`);
 
     res.json({

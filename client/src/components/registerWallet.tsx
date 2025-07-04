@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Wallet, Check } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext"; // Import useAuth
-import { useTideyWrite } from "../hooks/useTIdey"; // Import useTideyWrite hook
+import { useAuth } from "../contexts/AuthContext";
+import { useWriteContract } from "wagmi";
+import { ethers } from "ethers";
+import { TIDEY_ADDRESS } from "../contracts/config";
+import { TideyABI } from "../generated/factories/contracts/Tidey__factory";
 
 const WalletRegister: React.FC = () => {
-  const { user } = useAuth(); // Get user from AuthContext
+  const { user } = useAuth();
   const walletAddress = user?.walletAddress || "";
   const walletConnected = !!user?.walletConnected;
   const [loading, setLoading] = useState(false);
@@ -13,14 +16,19 @@ const WalletRegister: React.FC = () => {
   const [isRegistered, setIsRegistered] = useState(false);
   const [blockchainRegistered, setBlockchainRegistered] = useState(false);
   const [blockchainError, setBlockchainError] = useState("");
+  const [blockchainInProgress, setBlockchainInProgress] = useState(false);
 
-  // Get the registerVolunteer function and its state from useTideyWrite
-  const { registerVolunteer, isPending: isBlockchainPending } = useTideyWrite();
+  const { writeContractAsync, isPending: isBlockchainPending } = useWriteContract();
 
-  // Extract user data for blockchain registration
   const userName = user?.name || "";
   const userEmail = user?.email || "";
-  const userPhone = user?.phone || "";
+  // const userPhone = user?.phone || "";
+  const userPhone = "9090909090";
+
+  console.log("userPhone:", userPhone);
+  console.log("userEmail:", userEmail);
+  console.log("userName:", userName);
+  
 
   const handleRegister = async () => {
     setError("");
@@ -34,52 +42,70 @@ const WalletRegister: React.FC = () => {
     }
 
     setLoading(true);
+    setBlockchainInProgress(true);
+
     try {
-      // Step 1: Register on the blockchain
+      // Step 1: Register on the blockchain and wait for confirmation
+      console.log("Starting blockchain registration...");
+      let tx;
       try {
-        await registerVolunteer(userName, userEmail, userPhone);
-        setBlockchainRegistered(true);
+        tx = await writeContractAsync({
+          address: TIDEY_ADDRESS,
+          abi: TideyABI,
+          functionName: "registerVolunteer",
+          args: [userName, userEmail, userPhone],
+        });
       } catch (blockchainErr: any) {
-        setBlockchainError(
-          `Blockchain registration failed: ${blockchainErr.message || "Unknown error"
+        // User rejected or failed to send
+        throw new Error(blockchainErr?.shortMessage || blockchainErr?.message || "Transaction rejected or failed");
+      }
+
+      // Wait for transaction to be mined
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const receipt = await provider.waitForTransaction(tx, 1, 60000); // wait 1 confirmation, up to 60s
+      if (!receipt || receipt.status !== 1) {
+        throw new Error("Blockchain transaction failed or was reverted");
+      }
+
+      console.log("Blockchain registration successful");
+      setBlockchainRegistered(true);
+
+      // Step 2: Only after blockchain success, register wallet in MongoDB
+      try {
+        console.log("Starting MongoDB registration...");
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Authentication token is missing. Please log in.");
+          return;
+        }
+
+        await axios.post(
+          "/api/wallet-register/register-wallet",
+          { walletAddress },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log("MongoDB registration successful");
+        setIsRegistered(true);
+      } catch (mongoErr: any) {
+        console.error("MongoDB registration error:", mongoErr);
+        setError(
+          `Database registration failed: ${
+            mongoErr.response?.data?.message || mongoErr.message || "Unknown error"
           }`
         );
-        setIsRegistered(false);
-        setBlockchainRegistered(false);
-        setLoading(false);
-        return;
       }
-
-      // Step 2: Register wallet in MongoDB (only if blockchain registration succeeded)
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Authentication token is missing. Please log in.");
-        setLoading(false);
-        return;
-      }
-
-      await axios.post(
-        "/api/wallet-register/register-wallet",
-        { walletAddress },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+    } catch (blockchainErr: any) {
+      console.error("Blockchain registration error:", blockchainErr);
+      setBlockchainError(
+        `Blockchain registration failed: ${blockchainErr.message || "Unknown error"}`
       );
-
-      setIsRegistered(true);
-    } catch (err: any) {
-      console.error("Wallet registration error:", err);
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
-      } else {
-        setError(`Failed to register wallet: ${err.message || "Unknown error"}`);
-      }
-      setIsRegistered(false);
-      setBlockchainRegistered(false);
     } finally {
       setLoading(false);
+      setBlockchainInProgress(false);
     }
   };
 
@@ -120,17 +146,17 @@ const WalletRegister: React.FC = () => {
           {loading || isBlockchainPending ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              {isRegistered ? "Registering on Blockchain..." : "Registering..."}
+              {blockchainRegistered ? "Registering in Database..." : "Registering on Blockchain..."}
             </>
           ) : isRegistered && blockchainRegistered ? (
             <>
               <Check className="h-5 w-5" />
               Wallet Fully Registered!
             </>
-          ) : isRegistered && !blockchainRegistered ? (
+          ) : blockchainRegistered && !isRegistered ? (
             <>
               <Wallet className="h-5 w-5" />
-              Complete Blockchain Registration
+              Complete Database Registration
             </>
           ) : (
             <>
@@ -149,12 +175,9 @@ const WalletRegister: React.FC = () => {
         {blockchainError && (
           <div className="mt-6 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 shadow-sm text-sm">
             <p className="font-medium">{blockchainError}</p>
-            {isRegistered && (
-              <p className="mt-2">
-                Your wallet is registered in our database, but blockchain
-                registration failed. You can try again later.
-              </p>
-            )}
+            <p className="mt-2">
+              Blockchain registration failed. Please try again.
+            </p>
           </div>
         )}
 
@@ -176,11 +199,18 @@ const WalletRegister: React.FC = () => {
           </div>
         )}
 
-        {isRegistered && !blockchainRegistered && !blockchainError && (
+        {blockchainRegistered && !isRegistered && !error && (
           <div className="mt-6 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg p-4 shadow-sm text-sm">
             <p className="font-medium">
-              ⚠️ Database registration complete. Waiting for blockchain
-              confirmation...
+              ⚠️ Blockchain registration complete. Registering in our database...
+            </p>
+          </div>
+        )}
+
+        {blockchainInProgress && !blockchainRegistered && !blockchainError && (
+          <div className="mt-6 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-4 shadow-sm text-sm">
+            <p className="font-medium">
+              Registering on blockchain... Please confirm the transaction in your wallet.
             </p>
           </div>
         )}
@@ -190,4 +220,5 @@ const WalletRegister: React.FC = () => {
 };
 
 export default WalletRegister;
- 
+
+
