@@ -3,13 +3,12 @@ import fs from "fs";
 import path from "path";
 
 async function main() {
-
   const [deployer] = await hre.ethers.getSigners();
   console.log("Deploying contracts with account:", deployer.address);
-  // const myAddress = "0x54ebbDDA8046b34D635a3B2B25297B01AcED554f";
-  const myAddress = process.env.MY_ADDRESS as string;
-  console.log("Deployed By ->>",myAddress);
-  
+  const myAddress = "0x54ebbDDA8046b34D635a3B2B25297B01AcED554f";
+  // const myAddress = process.env.MY_ADDRESS as string;
+  console.log("Deployed By ->>", myAddress);
+
   // 1. Deploy AquaCoin
   const AquaCoin = await hre.ethers.getContractFactory("AquaCoin");
   const aquaCoin = await AquaCoin.deploy(myAddress);

@@ -1,43 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useReadContract } from "wagmi";
-import { AQUACOIN_ADDRESS } from "../../contracts/config"; // Import your address
+import { useAccount } from "wagmi";
+import { AQUACOIN_ADDRESS } from "../../contracts/config";
 import { Copy } from "lucide-react";
-
-// Use your AQUACOIN address
-const REWARD_TOKEN_ADDRESS = AQUACOIN_ADDRESS;
-
-// Standard ERC-20 ABI for balanceOf and symbol
-const ERC20_ABI = [
-  {
-    name: "balanceOf",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "account", type: "address" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    name: "symbol",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "string" }],
-  },
-  {
-    name: "decimals",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint8" }],
-  },
-  {
-    name: "name",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "string" }],
-  },
-] as const;
+import { useBalanceOfAQUA } from "../../hooks/useAquaCoin";
+import { useAuth } from "../../contexts/AuthContext";
 
 const copyToClipboard = (value: string) => {
   navigator.clipboard.writeText(value);
@@ -45,35 +12,11 @@ const copyToClipboard = (value: string) => {
 
 const RewardWalletConnect: React.FC = () => {
   const { address, isConnected } = useAccount();
+  const { updateUser } = useAuth();
 
-  // Read token balance
-  const { data: tokenBalance, isLoading: balanceLoading } = useReadContract({
-    address: REWARD_TOKEN_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-  });
-
-  // Read token symbol
-  const { data: tokenSymbol } = useReadContract({
-    address: REWARD_TOKEN_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: "symbol",
-  });
-
-  // Read token name
-  const { data: tokenName } = useReadContract({
-    address: REWARD_TOKEN_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: "name",
-  });
-
-  // Read token decimals
-  const { data: tokenDecimals } = useReadContract({
-    address: REWARD_TOKEN_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: "decimals",
-  });
+  // Use the hook instead of direct contract calls
+  const { tokenBalance, balanceLoading, tokenSymbol, tokenDecimals } =
+    useBalanceOfAQUA();
 
   // Format token balance
   const formatTokenBalance = (
@@ -86,6 +29,29 @@ const RewardWalletConnect: React.FC = () => {
     return formatted.toFixed(2);
   };
 
+  // Update AQUABalance in AuthContext when balance changes
+  useEffect(() => {
+    if (isConnected && tokenBalance && tokenDecimals) {
+      const formattedBalance = Number(
+        formatTokenBalance(tokenBalance as bigint, tokenDecimals as number)
+      );
+
+      updateUser({
+        AQUABalance: formattedBalance,
+        AQUASymbol: tokenSymbol as string | undefined,
+        AQUADecimal: tokenDecimals as number | undefined,
+        walletAddress: address,
+        walletConnected: true,
+      });
+    } else if (!isConnected) {
+      updateUser({
+        AQUABalance: 0,
+        walletAddress: undefined,
+        walletConnected: false,
+      });
+    }
+  }, [isConnected, tokenBalance, tokenDecimals, address, updateUser]);
+
   return (
     <div className="bg-white border border-teal-200 rounded-xl shadow-lg px-4 py-3 w-72 min-w-[260px]">
       <div className="flex items-center justify-between mb-2">
@@ -94,7 +60,7 @@ const RewardWalletConnect: React.FC = () => {
             🪙
           </span>
           <span className="font-semibold text-teal-700 text-base">
-            {tokenName || "AquaCoin"}
+            AquaCoin
           </span>
         </div>
         <ConnectButton.Custom>
@@ -188,11 +154,10 @@ const RewardWalletConnect: React.FC = () => {
             ) : (
               <>
                 <span className="font-bold text-xs text-green-900 truncate max-w-[160px] inline-block align-middle">
-                  {formatTokenBalance(
+                  {`${formatTokenBalance(
                     tokenBalance as bigint,
                     tokenDecimals as number
-                  )}{" "}
-                  {tokenSymbol || "AQUA"}
+                  )} ${tokenSymbol ?? "AQUA"}`}
                 </span>
                 <button
                   className="ml-1 p-1 rounded hover:bg-green-100"
@@ -216,12 +181,12 @@ const RewardWalletConnect: React.FC = () => {
           <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1 px-1">
             <span>Contract:</span>
             <span className="font-mono">
-              {REWARD_TOKEN_ADDRESS.slice(0, 6)}...{REWARD_TOKEN_ADDRESS.slice(-4)}
+              {AQUACOIN_ADDRESS.slice(0, 6)}...{AQUACOIN_ADDRESS.slice(-4)}
             </span>
             <button
               className="ml-1 p-1 rounded hover:bg-gray-100"
               title="Copy contract address"
-              onClick={() => copyToClipboard(REWARD_TOKEN_ADDRESS)}
+              onClick={() => copyToClipboard(AQUACOIN_ADDRESS)}
               type="button"
             >
               <Copy className="w-3 h-3 text-gray-400" />

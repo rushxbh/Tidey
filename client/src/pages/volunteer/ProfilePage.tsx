@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Calendar, Coins, Camera, Copy } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
-import { useAccount, useReadContract } from "wagmi";
-import { AQUACOIN_ADDRESS } from '../../contracts/config';
-
 interface UserStats {
   eventsJoined: number;
   totalHours: number;
@@ -12,6 +9,7 @@ interface UserStats {
 }
 
 const ProfilePage: React.FC = () => {
+  const tokenDecimals = 4;
   const { user} = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
@@ -19,7 +17,8 @@ const ProfilePage: React.FC = () => {
     email: user?.email || '',
     phone: user?.phone || '',
     location: user?.location || '',
-    bio: user?.bio || ''
+    bio: user?.bio || '',
+    isConnected: user?.walletConnected || false
   });
   const [userStats, setUserStats] = useState<UserStats>({
     eventsJoined: 0,
@@ -29,6 +28,10 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const tokenSymbol = user?.AQUASymbol || "AQUA"; // Default to "AQUA" if undefined
+const isConnected = user?.walletConnected || false; // Default to false if undefined
+const tokenBalance = user?.AQUABalance ?? 0; // Default to 0 if undefined
+const balanceLoading = typeof user?.AQUABalance === "undefined"; // Check if balance is undefined
 
   useEffect(() => {
     fetchUserStats();
@@ -38,7 +41,8 @@ const ProfilePage: React.FC = () => {
         email: user.email || '',
         phone: user.phone || '',
         location: user.location || '',
-        bio: user.bio || ''
+        bio: user.bio || '',
+        isConnected: user?.walletConnected || false
       });
     }
   }, [user]);
@@ -85,76 +89,28 @@ const ProfilePage: React.FC = () => {
     { name: 'First Cleanup', description: 'Completed your first beach cleanup', icon: '🏆', earned: userStats.eventsJoined > 0 },
     { name: 'Team Player', description: 'Joined 5 team cleanup events', icon: '👥', earned: userStats.eventsJoined >= 5 },
     { name: 'Ocean Guardian', description: 'Volunteered for 20+ hours', icon: '🌊', earned: userStats.totalHours >= 20 },
-    { name: 'Early Bird', description: 'Earned 500+ AquaCoins', icon: '🌅', earned: userStats.aquaCoins >= 500 },
+    // { name: 'Early Bird', description: 'Earned 500+ AquaCoins', icon: '🌅', earned: userStats.aquaCoins >= 500 },
     { name: 'Weekend Warrior', description: 'Participated in 10 events', icon: '⚡', earned: userStats.eventsJoined >= 10 },
     { name: 'Eco Champion', description: 'Volunteered for 50+ hours', icon: '♻️', earned: userStats.totalHours >= 50 }
   ];
 
-  // AquaCoin contract logic
-  const { address, isConnected } = useAccount();
-  const { data: tokenBalance, isLoading: balanceLoading } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "balanceOf",
-        type: "function",
-        stateMutability: "view",
-        inputs: [{ name: "account", type: "address" }],
-        outputs: [{ name: "", type: "uint256" }],
-      },
-      {
-        name: "symbol",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "string" }],
-      },
-      {
-        name: "decimals",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "uint8" }],
-      },
-    ] as const,
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-  });
-  const { data: tokenSymbol } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "symbol",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "string" }],
-      },
-    ] as const,
-    functionName: "symbol",
-  });
-  const { data: tokenDecimals } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "decimals",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "uint8" }],
-      },
-    ] as const,
-    functionName: "decimals",
-  });
-
   const formatTokenBalance = (
-    balance: bigint | undefined,
+    balance: number | bigint | undefined,
     decimals: number | undefined
   ) => {
     if (!balance || decimals === undefined) return "0.00";
+    
+    // Convert to bigint if needed
+    const balanceAsBigInt = typeof balance === 'number' ? BigInt(balance) : balance;
     const divisor = BigInt(10 ** decimals);
-    const formatted = Number(balance) / Number(divisor);
-    return formatted.toFixed(2);
+    
+    // Convert to string first to handle large numbers correctly
+    const wholePartStr = (balanceAsBigInt / divisor).toString();
+    const fractionalPartStr = (balanceAsBigInt % divisor).toString().padStart(decimals, '0');
+    
+    // Format to 2 decimal places
+    const formattedStr = `${wholePartStr}.${fractionalPartStr.substring(0, 2)}`;
+    return formattedStr;
   };
 
   if (!user) {
@@ -209,7 +165,12 @@ const ProfilePage: React.FC = () => {
                     <User className="h-12 w-12 text-primary-600" />
                   )}
                 </div>
-                <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50">
+                <button
+                  className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50"
+                  title="Change profile picture"
+                  aria-label="Change profile picture"
+                  type="button"
+                >
                   <Camera className="h-4 w-4 text-gray-600" />
                 </button>
               </div>
@@ -218,34 +179,23 @@ const ProfilePage: React.FC = () => {
                 <p className="text-gray-600">Volunteer</p>
                 <div className="flex items-center mt-2">
                   <Coins className="h-4 w-4 text-ocean-600 mr-1" />
-                  {/* AquaCoin balance from contract */}
+                  {/* AquaCoin balance from AuthContext */}
                   {isConnected ? (
-                    balanceLoading ? (
-                      <span className="text-ocean-600 font-semibold">Loading...</span>
-                    ) : (
-                      <span className="text-ocean-600 font-semibold flex items-center gap-1">
-                        {formatTokenBalance(
-                          tokenBalance as bigint,
-                          tokenDecimals as number
-                        )}{" "}
-                        {tokenSymbol || "AQUA"}
-                        <button
-                          className="ml-1 p-1 rounded hover:bg-ocean-100"
-                          title="Copy balance"
-                          onClick={() =>
-                            navigator.clipboard.writeText(
-                              `${formatTokenBalance(
-                                tokenBalance as bigint,
-                                tokenDecimals as number
-                              )} ${tokenSymbol || "AQUA"}`
-                            )
-                          }
-                          type="button"
-                        >
-                          <Copy className="w-3 h-3 text-ocean-600" />
-                        </button>
-                      </span>
-                    )
+                    <span className="text-ocean-600 font-semibold flex items-center gap-1">
+                      {formatTokenBalance(tokenBalance, tokenDecimals)} {tokenSymbol || "AQUA"}
+                      <button
+                        className="ml-1 p-1 rounded hover:bg-ocean-100"
+                        title="Copy balance"
+                        onClick={() =>
+                          navigator.clipboard.writeText(
+                            `${formatTokenBalance(tokenBalance, tokenDecimals)} ${tokenSymbol || "AQUA"}`
+                          )
+                        }
+                        type="button"
+                      >
+                        <Copy className="w-3 h-3 text-ocean-600" />
+                      </button>
+                    </span>
                   ) : (
                     <span className="text-ocean-600 font-semibold">Connect Wallet</span>
                   )}
@@ -397,7 +347,7 @@ const ProfilePage: React.FC = () => {
                   ) : (
                     <span className="font-semibold text-gray-900 flex items-center gap-1">
                       {formatTokenBalance(
-                        tokenBalance as bigint,
+                        tokenBalance,
                         tokenDecimals as number
                       )}{" "}
                       {tokenSymbol || "AQUA"}
@@ -407,7 +357,7 @@ const ProfilePage: React.FC = () => {
                         onClick={() =>
                           navigator.clipboard.writeText(
                             `${formatTokenBalance(
-                              tokenBalance as bigint,
+                              tokenBalance,
                               tokenDecimals as number
                             )} ${tokenSymbol || "AQUA"}`
                           )
@@ -441,7 +391,7 @@ const ProfilePage: React.FC = () => {
                   ) : (
                     <span className="text-3xl font-bold text-ocean-600 flex items-center gap-1">
                       {formatTokenBalance(
-                        tokenBalance as bigint,
+                        tokenBalance,
                         tokenDecimals as number
                       )}{" "}
                       {tokenSymbol || "AQUA"}
@@ -451,7 +401,7 @@ const ProfilePage: React.FC = () => {
                         onClick={() =>
                           navigator.clipboard.writeText(
                             `${formatTokenBalance(
-                              tokenBalance as bigint,
+                              tokenBalance,
                               tokenDecimals as number
                             )} ${tokenSymbol || "AQUA"}`
                           )

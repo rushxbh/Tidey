@@ -197,6 +197,7 @@ const EditEventPage: React.FC = () => {
           <button
             onClick={() => navigate('/ngo/events')}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+            title="Back to Events"
           >
             <ArrowLeft className="h-6 w-6" />
           </button>

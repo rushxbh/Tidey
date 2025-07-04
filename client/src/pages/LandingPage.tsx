@@ -242,6 +242,8 @@ const LandingPage: React.FC = () => {
           <button
             onClick={() => scrollToSection("beach-health")}
             className="p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-300 hover:scale-110"
+            aria-label="Scroll to Beach Health section"
+            title="Scroll to Beach Health section"
           >
             <ChevronDown className="h-6 w-6 text-gray-600" />
           </button>

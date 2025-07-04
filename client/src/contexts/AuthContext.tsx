@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
-
+import { useBalanceOfAQUA } from '../hooks/useAquaCoin';
 interface User {
   _id: string;
   id: string;
@@ -22,6 +22,9 @@ interface User {
   organizationDescription?: string;
   walletAddress?: string; // For MetaMask integration
   walletConnected?: boolean;
+  AQUABalance?:number;
+  AQUASymbol?:string;
+  AQUADecimal?:number;
 }
 
 interface AuthContextType {

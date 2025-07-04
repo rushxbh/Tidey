@@ -5,112 +5,123 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: 'volunteer' | 'ngo';
+  role: "volunteer" | "ngo";
   phone?: string;
   profilePicture?: string;
   location?: string;
   bio?: string;
-  
+  walletAddress?: string;
+
   // Volunteer specific fields
   aquaCoins?: number;
   totalHoursVolunteered?: number;
   eventsJoined?: number;
   achievements?: string[];
-  
+
   // NGO specific fields
   organizationName?: string;
   organizationDescription?: string;
   website?: string;
   verified?: boolean;
-  
+
   createdAt: Date;
   updatedAt: Date;
-  
+
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-const userSchema = new Schema<IUser>({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 100
+const userSchema = new Schema<IUser>(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+      select: false,
+    },
+    role: {
+      type: String,
+      enum: ["volunteer", "ngo"],
+      required: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+    },
+    walletAddress: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    profilePicture: {
+      type: String,
+      default: "",
+    },
+    location: {
+      type: String,
+      trim: true,
+    },
+    bio: {
+      type: String,
+      maxlength: 500,
+    },
+
+    // Volunteer specific fields
+    aquaCoins: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalHoursVolunteered: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    eventsJoined: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    achievements: [
+      {
+        type: String,
+      },
+    ],
+
+    // NGO specific fields
+    organizationName: {
+      type: String,
+      trim: true,
+    },
+    organizationDescription: {
+      type: String,
+      maxlength: 1000,
+    },
+    website: {
+      type: String,
+      trim: true,
+    },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: 6,
-    select: false
-  },
-  role: {
-    type: String,
-    enum: ['volunteer', 'ngo'],
-    required: true
-  },
-  phone: {
-    type: String,
-    trim: true
-  },
-  profilePicture: {
-    type: String,
-    default: ''
-  },
-  location: {
-    type: String,
-    trim: true
-  },
-  bio: {
-    type: String,
-    maxlength: 500
-  },
-  
-  // Volunteer specific fields
-  aquaCoins: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  totalHoursVolunteered: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  eventsJoined: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  achievements: [{
-    type: String
-  }],
-  
-  // NGO specific fields
-  organizationName: {
-    type: String,
-    trim: true
-  },
-  organizationDescription: {
-    type: String,
-    maxlength: 1000
-  },
-  website: {
-    type: String,
-    trim: true
-  },
-  verified: {
-    type: Boolean,
-    default: false
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 // Index for better query performance
 

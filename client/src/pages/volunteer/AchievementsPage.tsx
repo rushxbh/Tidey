@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Trophy, Coins, Star, Target, Award, Gift, Copy } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
-import { useAccount, useReadContract } from "wagmi";
-import { AQUACOIN_ADDRESS } from "../../contracts/config";
+import { useAccount } from "wagmi";
 
 interface Achievement {
   _id: string;
@@ -30,6 +29,7 @@ interface Achievement {
 
 const AchievementsPage: React.FC = () => {
   const { user } = useAuth();
+  const {address}=useAccount();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [completedAchievements, setCompletedAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,62 +40,7 @@ const AchievementsPage: React.FC = () => {
   // Track which achievements have been unlocked by token balance (stored in localStorage)
   const [tokenAchievements, setTokenAchievements] = useState<{ [id: string]: boolean }>({});
 
-  // AquaCoin contract logic
-  const { address, isConnected } = useAccount();
-  const { data: tokenBalance, isLoading: balanceLoading } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "balanceOf",
-        type: "function",
-        stateMutability: "view",
-        inputs: [{ name: "account", type: "address" }],
-        outputs: [{ name: "", type: "uint256" }],
-      },
-      {
-        name: "symbol",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "string" }],
-      },
-      {
-        name: "decimals",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "uint8" }],
-      },
-    ] as const,
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-  });
-  const { data: tokenSymbol } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "symbol",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "string" }],
-      },
-    ] as const,
-    functionName: "symbol",
-  });
-  const { data: tokenDecimals } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "decimals",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "uint8" }],
-      },
-    ] as const,
-    functionName: "decimals",
-  });
+  
 
   const formatTokenBalance = (
     balance: bigint | undefined,
@@ -106,6 +51,11 @@ const AchievementsPage: React.FC = () => {
     const formatted = Number(balance) / Number(divisor);
     return formatted;
   };
+  const tokenBalance = user?.AQUABalance ?? 0;
+  const tokenSymbol = user?.AQUASymbol || "AQUA";
+  const tokenDecimals = user?.AQUADecimal ?? 4;
+  const isConnected = user?.walletConnected || false;
+  const balanceLoading = typeof user?.AQUABalance === "undefined";
 
   // Load token achievements from localStorage
   useEffect(() => {
@@ -135,7 +85,10 @@ const AchievementsPage: React.FC = () => {
     if (!achievements.length || tokenDecimals === undefined || !isConnected) return;
 
     const updated: { [id: string]: boolean } = { ...tokenAchievements };
-    const balance = formatTokenBalance(tokenBalance as bigint, tokenDecimals as number);
+    const balance = formatTokenBalance(
+      BigInt(tokenBalance?.toString() || "0"), 
+      tokenDecimals as number
+    );
     let hasChanges = false;
 
     achievements.forEach((achievement) => {
@@ -271,7 +224,10 @@ const AchievementsPage: React.FC = () => {
       (/aqua.?coin|token|balance/i.test(achievement.name + achievement.description));
 
     if (isTokenBasedAchievement && isConnected && tokenDecimals !== undefined) {
-      const balance = formatTokenBalance(tokenBalance as bigint, tokenDecimals as number);
+      const balance = formatTokenBalance(
+        BigInt(tokenBalance?.toString() || "0"),
+        tokenDecimals as number
+      );
       return Math.min(balance, achievement.criteria.value);
     }
     
@@ -318,7 +274,7 @@ const AchievementsPage: React.FC = () => {
               ) : (
                 <span className="font-semibold text-ocean-800 flex items-center gap-1">
                   {formatTokenBalance(
-                    tokenBalance as bigint,
+                    BigInt(tokenBalance?.toString() || "0"),
                     tokenDecimals as number
                   )}{" "}
                   {tokenSymbol || "AQUA"}
@@ -328,7 +284,7 @@ const AchievementsPage: React.FC = () => {
                     onClick={() =>
                       navigator.clipboard.writeText(
                         `${formatTokenBalance(
-                          tokenBalance as bigint,
+                          BigInt(tokenBalance?.toString() || "0"),
                           tokenDecimals as number
                         )} ${tokenSymbol || "AQUA"}`
                       )

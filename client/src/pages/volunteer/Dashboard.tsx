@@ -1,10 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, Coins, Trophy, TrendingUp, BarChart3, ExternalLink, X, Copy } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
-import WalletDashboard from '../../components/wallet/WalletDashboard';
-import { useAccount, useReadContract } from "wagmi";
-import { AQUACOIN_ADDRESS } from '../../contracts/config'; // adjust path if needed
+import React, { useState, useEffect } from "react";
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Coins,
+  Trophy,
+  TrendingUp,
+  BarChart3,
+  ExternalLink,
+  X,
+  Copy,
+} from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import axios from "axios";
+import WalletDashboard from "../../components/wallet/WalletDashboard";
+import { useAccount } from "wagmi";
+import { useBalanceOfAQUA} from "../../hooks/useAquaCoin";
 
 interface Event {
   _id: string;
@@ -35,83 +46,33 @@ interface BeachHealthData {
 
 interface Attendance {
   event: string;
-  status: 'registered' | 'checked-in' | 'checked-out';
+  status: "registered" | "checked-in" | "checked-out";
   checkInTime?: string;
   checkOutTime?: string;
   hoursWorked?: number;
 }
 
 const Dashboard: React.FC = () => {
+  const { address, isConnected } = useAccount();
   const { user, connectWallet } = useAuth();
+  const { tokenBalance, balanceLoading, tokenDecimals, tokenSymbol } =
+    useBalanceOfAQUA();
+  // console.log(tokenDecimals);
+  
   const [registeredEvents, setRegisteredEvents] = useState<Event[]>([]);
   const [userStats, setUserStats] = useState<UserStats>({
     eventsJoined: 0,
     totalHours: 0,
     aquaCoins: 0,
-    achievements: 0
+    achievements: 0,
   });
   const [beachHealthData, setBeachHealthData] = useState<BeachHealthData[]>([]);
-  const [attendances, setAttendances] = useState<{ [key: string]: Attendance }>({});
+  const [attendances, setAttendances] = useState<{ [key: string]: Attendance }>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showWalletPrompt, setShowWalletPrompt] = useState(false);
-
-  // AquaCoin contract logic
-  const { address, isConnected } = useAccount();
-  const { data: tokenBalance, isLoading: balanceLoading } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "balanceOf",
-        type: "function",
-        stateMutability: "view",
-        inputs: [{ name: "account", type: "address" }],
-        outputs: [{ name: "", type: "uint256" }],
-      },
-      {
-        name: "symbol",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "string" }],
-      },
-      {
-        name: "decimals",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "uint8" }],
-      },
-    ] as const,
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-  });
-  const { data: tokenSymbol } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "symbol",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "string" }],
-      },
-    ] as const,
-    functionName: "symbol",
-  });
-  const { data: tokenDecimals } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "decimals",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "uint8" }],
-      },
-    ] as const,
-    functionName: "decimals",
-  });
 
   const formatTokenBalance = (
     balance: bigint | undefined,
@@ -131,23 +92,28 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch user statistics
-      const statsResponse = await axios.get('/api/users/stats');
+      const statsResponse = await axios.get("/api/users/stats");
       setUserStats(statsResponse.data);
 
       // Fetch beach health data
-      const beachHealthResponse = await axios.get('/api/beach-health/latest');
-      setBeachHealthData(beachHealthResponse.data.beaches || [
-        { location: "Juhu Beach", score: 78, lastUpdated: "2 hours ago" },
-        { location: "Marine Drive", score: 85, lastUpdated: "4 hours ago" },
-        { location: "Versova Beach", score: 72, lastUpdated: "1 day ago" },
-        { location: "Chowpatty Beach", score: 68, lastUpdated: "6 hours ago" },
-      ]);
-
+      const beachHealthResponse = await axios.get("/api/beach-health/latest");
+      setBeachHealthData(
+        beachHealthResponse.data.beaches || [
+          { location: "Juhu Beach", score: 78, lastUpdated: "2 hours ago" },
+          { location: "Marine Drive", score: 85, lastUpdated: "4 hours ago" },
+          { location: "Versova Beach", score: 72, lastUpdated: "1 day ago" },
+          {
+            location: "Chowpatty Beach",
+            score: 68,
+            lastUpdated: "6 hours ago",
+          },
+        ]
+      );
     } catch (err: any) {
-      console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data');
+      console.error("Error fetching dashboard data:", err);
+      setError("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
@@ -155,7 +121,7 @@ const Dashboard: React.FC = () => {
 
   const fetchUserAttendances = async () => {
     try {
-      const response = await axios.get('/api/users/attendances');
+      const response = await axios.get("/api/users/attendances");
       const attendanceMap: { [key: string]: Attendance } = {};
       response.data.attendances?.forEach((attendance: Attendance) => {
         attendanceMap[attendance.event] = attendance;
@@ -165,26 +131,32 @@ const Dashboard: React.FC = () => {
       // Fetch only registered events
       const eventIds = Object.keys(attendanceMap);
       if (eventIds.length > 0) {
-        const eventsResponse = await axios.get(`/api/events?ids=${eventIds.join(',')}&limit=5`);
+        const eventsResponse = await axios.get(
+          `/api/events?ids=${eventIds.join(",")}&limit=5`
+        );
         setRegisteredEvents(eventsResponse.data.events || []);
       }
     } catch (err: any) {
-      console.error('Error fetching attendances:', err);
+      console.error("Error fetching attendances:", err);
     }
   };
 
   const handleUnregister = async (eventId: string) => {
-    if (!window.confirm('Are you sure you want to unregister from this event?')) {
+    if (
+      !window.confirm("Are you sure you want to unregister from this event?")
+    ) {
       return;
     }
 
     try {
       await axios.delete(`/api/events/${eventId}/register`);
       fetchUserAttendances();
-      showSuccessNotification('Successfully unregistered from event!');
+      showSuccessNotification("Successfully unregistered from event!");
     } catch (err: any) {
-      console.error('Error unregistering:', err);
-      showErrorNotification(err.response?.data?.message || 'Failed to unregister');
+      console.error("Error unregistering:", err);
+      showErrorNotification(
+        err.response?.data?.message || "Failed to unregister"
+      );
     }
   };
 
@@ -195,8 +167,9 @@ const Dashboard: React.FC = () => {
   };
 
   const showSuccessNotification = (message: string) => {
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    const notification = document.createElement("div");
+    notification.className =
+      "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2";
     notification.innerHTML = `
       <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -210,8 +183,9 @@ const Dashboard: React.FC = () => {
   };
 
   const showErrorNotification = (message: string) => {
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    const notification = document.createElement("div");
+    notification.className =
+      "fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2";
     notification.innerHTML = `
       <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -225,13 +199,15 @@ const Dashboard: React.FC = () => {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 bg-green-100';
-    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
+    if (score >= 80) return "text-green-600 bg-green-100";
+    if (score >= 60) return "text-yellow-600 bg-yellow-100";
+    return "text-red-600 bg-red-100";
   };
 
   const getGoogleMapsUrl = (locationName: string) => {
-    return `https://www.google.com/maps/search/${encodeURIComponent(locationName)}`;
+    return `https://www.google.com/maps/search/${encodeURIComponent(
+      locationName
+    )}`;
   };
 
   if (loading) {
@@ -264,7 +240,9 @@ const Dashboard: React.FC = () => {
                     tokenBalance as bigint,
                     tokenDecimals as number
                   )}{" "}
-                  {tokenSymbol || "AQUA"} 
+                  {typeof tokenSymbol === "string" && tokenSymbol
+                    ? tokenSymbol
+                    : "AQUA"}
                   <button
                     className="ml-1 p-1 rounded hover:bg-ocean-100"
                     title="Copy balance"
@@ -273,7 +251,7 @@ const Dashboard: React.FC = () => {
                         `${formatTokenBalance(
                           tokenBalance as bigint,
                           tokenDecimals as number
-                        )} ${tokenSymbol || "AQUA"}`
+                        )} ${"AQUA"}`
                       )
                     }
                     type="button"
@@ -283,7 +261,9 @@ const Dashboard: React.FC = () => {
                 </span>
               )
             ) : (
-              <span className="font-semibold text-ocean-800">Connect Wallet</span>
+              <span className="font-semibold text-ocean-800">
+                Connect Wallet
+              </span>
             )}
           </div>
           <WalletDashboard />

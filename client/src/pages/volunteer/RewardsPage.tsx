@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Gift, Coins, Star, ShoppingBag, Filter, Copy } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
-import { useAccount, useReadContract } from "wagmi";
-import { AQUACOIN_ADDRESS } from '../../contracts/config';
 
 interface Reward {
   _id: string;
@@ -28,84 +26,29 @@ const RewardsPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // AquaCoin contract logic
-  const { address, isConnected } = useAccount();
-  const { data: tokenBalance, isLoading: balanceLoading } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "balanceOf",
-        type: "function",
-        stateMutability: "view",
-        inputs: [{ name: "account", type: "address" }],
-        outputs: [{ name: "", type: "uint256" }],
-      },
-      {
-        name: "symbol",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "string" }],
-      },
-      {
-        name: "decimals",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "uint8" }],
-      },
-    ] as const,
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-  });
-  const { data: tokenSymbol } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "symbol",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "string" }],
-      },
-    ] as const,
-    functionName: "symbol",
-  });
-  const { data: tokenDecimals } = useReadContract({
-    address: AQUACOIN_ADDRESS,
-    abi: [
-      {
-        name: "decimals",
-        type: "function",
-        stateMutability: "view",
-        inputs: [],
-        outputs: [{ name: "", type: "uint8" }],
-      },
-    ] as const,
-    functionName: "decimals",
-  });
+  // Replace direct contract reading with AuthContext data
+  const tokenBalance = user?.AQUABalance ?? 0;
+  const tokenSymbol = user?.AQUASymbol || "AQUA";
+  const tokenDecimals = user?.AQUADecimal ?? 4;
+  const isConnected = user?.walletConnected || false;
+  const balanceLoading = typeof user?.AQUABalance === "undefined";
 
   const formatTokenBalance = (
-    balance: bigint | undefined,
+    balance: number | undefined,
     decimals: number | undefined
   ) => {
     if (!balance || decimals === undefined) return "0.00";
-    const divisor = BigInt(10 ** decimals);
-    const formatted = Number(balance) / Number(divisor);
+    const divisor = 10 ** decimals;
+    const formatted = Number(balance) / divisor;
     return formatted.toFixed(2);
   };
 
-  // Use contract balance for userCoins
-  const userCoins = isConnected
-    ? Number(formatTokenBalance(tokenBalance as bigint, tokenDecimals as number))
-    : 0;
+  // Use AuthContext balance for userCoins
+  const userCoins = isConnected ? Number(formatTokenBalance(tokenBalance, tokenDecimals)) : 0;
 
   useEffect(() => {
     fetchRewards();
-    // if (user) {
-    //   setUserCoins(user.aquaCoins || 0);
-    // }
-  }, [filter, page, address, tokenBalance, tokenDecimals, isConnected]);
+  }, [filter, page, tokenBalance, isConnected]);
 
   const fetchRewards = async () => {
     try {
@@ -188,26 +131,26 @@ const RewardsPage: React.FC = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-ocean-50 px-4 py-2 rounded-lg">
             <Coins className="h-5 w-5 text-ocean-600" />
-            {/* AquaCoin balance from contract */}
+            {/* Use AquaCoin balance from AuthContext */}
             {isConnected ? (
               balanceLoading ? (
                 <span className="font-semibold text-ocean-800">Loading...</span>
               ) : (
                 <span className="font-semibold text-ocean-800 flex items-center gap-1">
                   {formatTokenBalance(
-                    tokenBalance as bigint,
-                    tokenDecimals as number
+                    tokenBalance,
+                    tokenDecimals
                   )}{" "}
-                  {tokenSymbol || "AQUA"}
+                  {tokenSymbol}
                   <button
                     className="ml-1 p-1 rounded hover:bg-ocean-100"
                     title="Copy balance"
                     onClick={() =>
                       navigator.clipboard.writeText(
                         `${formatTokenBalance(
-                          tokenBalance as bigint,
-                          tokenDecimals as number
-                        )} ${tokenSymbol || "AQUA"}`
+                          tokenBalance,
+                          tokenDecimals
+                        )} ${tokenSymbol}`
                       )
                     }
                     type="button"

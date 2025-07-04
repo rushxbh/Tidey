@@ -31,3 +31,5 @@ Thumbs.db
 *.sln  
 # Ignore generated client code
 client/src/generated
+
+Forme.txt   

@@ -57,6 +57,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
         uint256 totalTokensEarned; // Total AQUA tokens earned
         uint256 evidenceSubmitted; // Number of evidence submitted
         uint256 tasksParticipated; // Number of tasks participated
+        uint256 HoursVolunteered;
         bool isActive;
         bool isRegistered;
     }
@@ -67,6 +68,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
         string title;
         string description;
         string location;
+        uint256 taskDuration;
         uint256 startTime;
         uint256 endTime;
         uint256 maxParticipants;
@@ -259,6 +261,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
             totalTokensEarned: 0,
             evidenceSubmitted: 0,
             tasksParticipated: 0,
+            HoursVolunteered:0,
             isActive: true,
             isRegistered: true
         });
@@ -304,6 +307,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
         string calldata _title,
         string calldata _description,
         string calldata _location,
+        uint256 _taskDuration,
         uint256 _startTime,
         uint256 _endTime,
         uint256 _maxParticipants
@@ -329,6 +333,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
             taskId: taskId,
             title: _title,
             description: _description,
+            taskDuration:_taskDuration,
             location: _location,
             startTime: _startTime,
             endTime: _endTime,
@@ -406,7 +411,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
 
         Task storage task = tasks[_taskId];
         uint256 totalRewards = task.currentParticipants * taskRewardAmount;
-
+        uint256 taskhours = task.taskDuration ;
         // Distribute rewards to all participants
         for (uint256 i = 0; i < task.participants.length; i++) {
             address participant = task.participants[i];
@@ -414,6 +419,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
             // Update volunteer stats
             volunteers[participant].totalTokensEarned += taskRewardAmount;
             volunteers[participant].tasksParticipated++;
+            volunteers[participant].HoursVolunteered+=taskhours;
 
             // Transfer tokens
             require(

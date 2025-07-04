@@ -1,56 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { Waves, Mail, Lock, User, Building2, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { Waves, Mail, Lock, User, Building2, Eye, EyeOff } from "lucide-react";
 
 // Glass Form Component with inline styles
-const GlassForm: React.FC<{ 
-  children: React.ReactNode; 
-  onMouseMove: (e: React.MouseEvent) => void; 
-  onMouseLeave: (e: React.MouseEvent) => void; 
+const GlassForm: React.FC<{
+  children: React.ReactNode;
+  onMouseMove: (e: React.MouseEvent) => void;
+  onMouseLeave: (e: React.MouseEvent) => void;
 }> = ({ children, onMouseMove, onMouseLeave }) => {
   const glassFormStyles: React.CSSProperties = {
-    position: 'relative',
-    width: '100%',
-    maxWidth: '450px',
-    minHeight: '600px',
-    borderRadius: '20px',
-    overflow: 'hidden',
-    boxShadow: '0 6px 24px rgba(0, 0, 0, 0.2)',
-    animation: 'slideInUp 0.6s ease-out',
+    position: "relative",
+    width: "100%",
+    maxWidth: "450px",
+    minHeight: "600px",
+    borderRadius: "20px",
+    overflow: "hidden",
+    boxShadow: "0 6px 24px rgba(0, 0, 0, 0.2)",
+    animation: "slideInUp 0.6s ease-out",
   };
 
   const glassFilterStyles: React.CSSProperties = {
-    position: 'absolute',
-    inset: '0',
-    borderRadius: 'inherit',
+    position: "absolute",
+    inset: "0",
+    borderRadius: "inherit",
     zIndex: 1,
-    backdropFilter: 'blur(4px)',
-    filter: 'saturate(120%) brightness(1.15)',
+    backdropFilter: "blur(4px)",
+    filter: "saturate(120%) brightness(1.15)",
   };
 
   const glassOverlayStyles: React.CSSProperties = {
-    position: 'absolute',
-    inset: '0',
-    borderRadius: 'inherit',
+    position: "absolute",
+    inset: "0",
+    borderRadius: "inherit",
     zIndex: 2,
-    background: 'rgba(255, 255, 255, 0.25)',
+    background: "rgba(255, 255, 255, 0.25)",
   };
 
   const glassSpecularStyles: React.CSSProperties = {
-    position: 'absolute',
-    inset: '0',
-    borderRadius: 'inherit',
+    position: "absolute",
+    inset: "0",
+    borderRadius: "inherit",
     zIndex: 3,
-    boxShadow: 'inset 1px 1px 1px rgba(255, 255, 255, 0.75)',
+    boxShadow: "inset 1px 1px 1px rgba(255, 255, 255, 0.75)",
   };
 
   const glassContentStyles: React.CSSProperties = {
-    position: 'relative',
+    position: "relative",
     zIndex: 4,
-    padding: '30px',
-    color: '#ffffff',
-    height: '100%',
+    padding: "30px",
+    color: "#ffffff",
+    height: "100%",
   };
 
   return (
@@ -236,19 +236,24 @@ const GlassForm: React.FC<{
           }
         `}
       </style>
-      <div 
+      <div
         className="glass-form"
         style={glassFormStyles}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
       >
-        <svg style={{ display: 'none' }}>
+        <svg style={{ display: "none" }}>
           <filter id="glass-distortion">
-            <feTurbulence type="turbulence" baseFrequency="0.008" numOctaves="2" result="noise" />
+            <feTurbulence
+              type="turbulence"
+              baseFrequency="0.008"
+              numOctaves="2"
+              result="noise"
+            />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="77" />
           </filter>
         </svg>
-        
+
         <div className="glass-filter" style={glassFilterStyles}></div>
         <div className="glass-overlay" style={glassOverlayStyles}></div>
         <div className="glass-specular" style={glassSpecularStyles}></div>
@@ -262,44 +267,47 @@ const GlassForm: React.FC<{
 
 const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'volunteer' as 'volunteer' | 'ngo',
-    organizationName: '',
-    phone: ''
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "volunteer" as "volunteer" | "ngo",
+    organizationName: "",
+    phone: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   const { register, user } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const redirectPath = user.role === 'volunteer' ? '/volunteer/dashboard' : '/ngo/dashboard';
+      const redirectPath =
+        user.role === "volunteer" ? "/volunteer/dashboard" : "/ngo/dashboard";
       navigate(redirectPath, { replace: true });
     }
   }, [user, navigate]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       setLoading(false);
       return;
     }
@@ -308,7 +316,7 @@ const RegisterPage: React.FC = () => {
       await register(formData);
       // The useEffect above will handle the redirect once user is set
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -318,8 +326,10 @@ const RegisterPage: React.FC = () => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
-    const specular = e.currentTarget.querySelector('.glass-specular') as HTMLElement;
+
+    const specular = e.currentTarget.querySelector(
+      ".glass-specular"
+    ) as HTMLElement;
     if (specular) {
       specular.style.background = `radial-gradient(
         circle at ${x}px ${y}px,
@@ -331,16 +341,18 @@ const RegisterPage: React.FC = () => {
   };
 
   const handleMouseLeave = (e: React.MouseEvent) => {
-    const specular = e.currentTarget.querySelector('.glass-specular') as HTMLElement;
+    const specular = e.currentTarget.querySelector(
+      ".glass-specular"
+    ) as HTMLElement;
     if (specular) {
-      specular.style.background = 'none';
+      specular.style.background = "none";
     }
   };
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
       {/* Ocean Background */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url('https://images.pexels.com/photos/1001682/pexels-photo-1001682.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')`,
@@ -352,12 +364,23 @@ const RegisterPage: React.FC = () => {
 
       {/* Animated waves */}
       <div className="absolute bottom-0 left-0 w-full h-32 opacity-30">
-        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-full">
-          <path d="M0,60 C300,120 600,0 900,60 C1050,90 1150,30 1200,60 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.1)">
-            <animate attributeName="d" dur="10s" repeatCount="indefinite"
+        <svg
+          viewBox="0 0 1200 120"
+          preserveAspectRatio="none"
+          className="w-full h-full"
+        >
+          <path
+            d="M0,60 C300,120 600,0 900,60 C1050,90 1150,30 1200,60 L1200,120 L0,120 Z"
+            fill="rgba(255,255,255,0.1)"
+          >
+            <animate
+              attributeName="d"
+              dur="10s"
+              repeatCount="indefinite"
               values="M0,60 C300,120 600,0 900,60 C1050,90 1150,30 1200,60 L1200,120 L0,120 Z;
                       M0,80 C300,40 600,100 900,80 C1050,60 1150,100 1200,80 L1200,120 L0,120 Z;
-                      M0,60 C300,120 600,0 900,60 C1050,90 1150,30 1200,60 L1200,120 L0,120 Z"/>
+                      M0,60 C300,120 600,0 900,60 C1050,90 1150,30 1200,60 L1200,120 L0,120 Z"
+            />
           </path>
         </svg>
       </div>
@@ -369,11 +392,7 @@ const RegisterPage: React.FC = () => {
         <h1>Join Tidey</h1>
         <p>Create your account</p>
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+        {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -392,7 +411,7 @@ const RegisterPage: React.FC = () => {
 
           <div className="form-group">
             <label htmlFor="name">
-              {formData.role === 'volunteer' ? 'Full Name' : 'Contact Name'}
+              {formData.role === "volunteer" ? "Full Name" : "Contact Name"}
             </label>
             <div className="input-wrapper">
               <User className="icon" size={20} />
@@ -408,7 +427,7 @@ const RegisterPage: React.FC = () => {
             </div>
           </div>
 
-          {formData.role === 'ngo' && (
+          {formData.role === "ngo" && (
             <div className="form-group">
               <label htmlFor="organizationName">Organization Name</label>
               <div className="input-wrapper">
@@ -449,7 +468,7 @@ const RegisterPage: React.FC = () => {
               <input
                 id="password"
                 name="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Enter your password"
@@ -472,7 +491,7 @@ const RegisterPage: React.FC = () => {
               <input
                 id="confirmPassword"
                 name="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? "text" : "password"}
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="Confirm your password"
@@ -488,18 +507,13 @@ const RegisterPage: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="submit-btn"
-          >
-            {loading ? 'Creating Account...' : 'Create Account'}
+          <button type="submit" disabled={loading} className="submit-btn">
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
         <div className="form-switch">
-          Already have an account?{' '}
-          <Link to="/login">Sign in</Link>
+          Already have an account? <Link to="/login">Sign in</Link>
         </div>
       </GlassForm>
     </div>
