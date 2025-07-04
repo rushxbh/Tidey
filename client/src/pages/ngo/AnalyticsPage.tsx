@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, Users, MapPin, Calendar, Download, Filter } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
-
+import { useAccount } from 'wagmi';
 interface AnalyticsData {
   totalEvents: number;
   totalVolunteers: number;
@@ -32,8 +32,10 @@ const AnalyticsPage: React.FC = () => {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const {address} = useAccount();
   const [timeRange, setTimeRange] = useState('6months');
-
+  console.log(address);
+  
   useEffect(() => {
     fetchAnalytics();
   }, [timeRange]);
@@ -138,10 +140,10 @@ const AnalyticsPage: React.FC = () => {
             <option value="6months">Last 6 Months</option>
             <option value="1year">Last Year</option>
           </select>
-          <button onClick={exportData} className="btn-primary">
+          {/* <button onClick={exportData} className="btn-primary">
             <Download className="h-5 w-5 mr-2" />
             Export Data
-          </button>
+          </button> */}
         </div>
       </div>
 

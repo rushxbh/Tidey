@@ -1,6 +1,8 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import WalletDashboard from './wallet/WalletDashboard';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { 
   Waves, 
   Home, 
@@ -16,7 +18,8 @@ import {
   BarChart3,
   Camera,
   MessageCircle,
-  Heart
+  Heart,
+  Settings
 } from 'lucide-react';
 import ChatbotModal from './ChatbotModal';
 
@@ -75,6 +78,7 @@ const Layout: React.FC<LayoutProps> = ({ requiredRole }) => {
     { icon: Users, label: 'Volunteers', path: '/ngo/volunteers' },
     { icon: BarChart3, label: 'Analytics', path: '/ngo/analytics' },
     { icon: Camera, label: 'Beach Scanner', path: '/ngo/beach-scanner' },
+    { icon: Settings, label: 'Admin Operations', path: '/ngo/admin-operation' },
   ];
 
   const navItems = user.role === 'volunteer' ? volunteerNavItems : ngoNavItems;
@@ -82,7 +86,11 @@ const Layout: React.FC<LayoutProps> = ({ requiredRole }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}
+      >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
           <div className="flex items-center space-x-2">
             <Waves className="h-8 w-8 text-primary-600" />
@@ -107,8 +115,8 @@ const Layout: React.FC<LayoutProps> = ({ requiredRole }) => {
                   to={item.path}
                   className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
                     isActive
-                      ? 'bg-primary-100 text-primary-700'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      ? "bg-primary-100 text-primary-700"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                   onClick={() => setSidebarOpen(false)}
                 >
@@ -138,6 +146,12 @@ const Layout: React.FC<LayoutProps> = ({ requiredRole }) => {
               </div>
             </div>
           )} */}
+          {/* Wallet Dashboard - Only for Admin */}
+          {user.role === "ngo" && (
+            <div className="mb-2">
+              <ConnectButton />
+            </div>
+          )}
           <button
             onClick={handleLogout}
             className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-700 rounded-lg hover:bg-red-50 transition-colors duration-200"

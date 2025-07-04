@@ -33,7 +33,7 @@ const WalletDashboard: React.FC = () => {
           <div className="absolute right-0 mt-2 z-50 p-2 bg-white rounded-xl shadow-xl border border-gray-100">
             <div className="flex gap-3">
               <RewardWalletConnect />
-              <EthWalletConnect />
+              {/* <EthWalletConnect /> */}
             </div>
           </div>
         </>

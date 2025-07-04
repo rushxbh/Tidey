@@ -261,7 +261,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
             totalTokensEarned: 0,
             evidenceSubmitted: 0,
             tasksParticipated: 0,
-            HoursVolunteered:0,
+            HoursVolunteered: 0,
             isActive: true,
             isRegistered: true
         });
@@ -333,7 +333,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
             taskId: taskId,
             title: _title,
             description: _description,
-            taskDuration:_taskDuration,
+            taskDuration: _taskDuration,
             location: _location,
             startTime: _startTime,
             endTime: _endTime,
@@ -397,7 +397,8 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
     ) external onlyAdminOrOwner whenNotPaused nonReentrant {
         require(_taskId > 0 && _taskId <= totalTasks, "Tidey: Invalid task ID");
         require(
-            block.timestamp > tasks[_taskId].endTime || tasks[_taskId].isActive==false,
+            block.timestamp > tasks[_taskId].endTime ||
+                tasks[_taskId].isActive == false,
             "Tidey: Task has not ended yet"
         );
         require(
@@ -411,7 +412,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
 
         Task storage task = tasks[_taskId];
         uint256 totalRewards = task.currentParticipants * taskRewardAmount;
-        uint256 taskhours = task.taskDuration ;
+        uint256 taskhours = task.taskDuration;
         // Distribute rewards to all participants
         for (uint256 i = 0; i < task.participants.length; i++) {
             address participant = task.participants[i];
@@ -419,7 +420,7 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
             // Update volunteer stats
             volunteers[participant].totalTokensEarned += taskRewardAmount;
             volunteers[participant].tasksParticipated++;
-            volunteers[participant].HoursVolunteered+=taskhours;
+            volunteers[participant].HoursVolunteered += taskhours;
 
             // Transfer tokens
             require(
@@ -673,7 +674,13 @@ contract Tidey is Ownable, Pausable, ReentrancyGuard {
         require(_admin != address(0), "Tidey: Invalid admin address");
         admins[_admin] = _status;
     }
-
+    /**
+     * @dev Returns true if the address is an admin.
+     * @param _admin Address to check
+     */
+    function getAdminStatus(address _admin) external view returns (bool) {
+        return admins[_admin];
+    }
     /**
      * @dev Update evidence reward amount
      * @param _newAmount New reward amount per evidence

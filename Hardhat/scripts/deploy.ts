@@ -16,7 +16,7 @@ async function main() {
   const aquaCoinAddress = await aquaCoin.getAddress();
   console.log(`AquaCoin deployed to: ${aquaCoinAddress}`);
 
-  // 2. Deploy Tidey, passing AquaCoin address and owner address
+  // 2. Deploy Tidey, patssing AquaCoin address and owner address
   const Tidey = await hre.ethers.getContractFactory("Tidey");
   // const tidey = await Tidey.deploy(aquaCoinAddress, deployer.address);
   const tidey = await Tidey.deploy(aquaCoinAddress, myAddress);
