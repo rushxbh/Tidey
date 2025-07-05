@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users, Clock, Filter, QrCode, Camera, CheckCircle, ExternalLink, Upload } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
-
+import EventDetails from '../../components/EventDetails';
 interface Event {
   _id: string;
   title: string;
@@ -218,11 +218,11 @@ const EventsPage: React.FC = () => {
       } else {
         return (
           <button
-            onClick={() => handleJoinEvent(event._id)}
+            onClick={() => setSelectedEventId(event._id)}
             className="w-full btn-primary"
             disabled={isEventFull}
           >
-            {isEventFull ? 'Event Full' : 'Join Event'}
+            {isEventFull ? "Event Full" : "Join Event"}
           </button>
         );
       }
@@ -564,6 +564,13 @@ const EventsPage: React.FC = () => {
               "Images uploaded successfully! You earned 25 AquaCoins!"
             );
           }}
+        />
+      )}
+
+      {selectedEventId && (
+        <EventDetails
+          eventId={selectedEventId}
+          onClose={() => setSelectedEventId(null)}
         />
       )}
     </div>
