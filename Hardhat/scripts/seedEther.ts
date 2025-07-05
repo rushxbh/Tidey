@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 
 async function main() {
   // Replace with your target address
-  const recipient = "0x54ebbDDA8046b34D635a3B2B25297B01AcED554f";
+  const recipient = "0x5d87672eADDe14672eaBC7Fe3a5C01D15BC06338";
   const amount = ethers.parseEther("100"); // 100 ETH
 
   // Get first signer (default Hardhat account)

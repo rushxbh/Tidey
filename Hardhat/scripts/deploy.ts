@@ -5,7 +5,7 @@ import path from "path";
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
   console.log("Deploying contracts with account:", deployer.address);
-  const myAddress = "0x54ebbDDA8046b34D635a3B2B25297B01AcED554f";
+  const myAddress = "0x5d87672eADDe14672eaBC7Fe3a5C01D15BC06338";
   // const myAddress = process.env.MY_ADDRESS as string;
   console.log("Deployed By ->>", myAddress);
 
