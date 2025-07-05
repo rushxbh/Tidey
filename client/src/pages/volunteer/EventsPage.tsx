@@ -293,21 +293,21 @@ const EventsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">
+    <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           Beach Cleanup Events
         </h1>
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <Filter className="h-5 w-5 text-gray-400" />
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
+            <Filter className="h-5 w-5 text-gray-400 flex-shrink-0" />
             <select
               value={filter}
               onChange={(e) => {
                 setFilter(e.target.value);
                 setPage(1);
               }}
-              className="input-field"
+              className="input-field w-full sm:w-auto"
               aria-label="Filter events by status"
             >
               <option value="all">All Events</option>
@@ -337,7 +337,7 @@ const EventsPage: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {events.map((event) => (
               <div key={event._id} className="card overflow-hidden">
                 {event.images && event.images.length > 0 ? (
@@ -351,7 +351,7 @@ const EventsPage: React.FC = () => {
                     <MapPin className="h-12 w-12 text-primary-600" />
                   </div>
                 )}
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-2">
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
@@ -376,23 +376,21 @@ const EventsPage: React.FC = () => {
 
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {new Date(event.date).toLocaleDateString()} •{" "}
-                      {event.startTime} - {event.endTime}
+                      <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">
+                        {new Date(event.date).toLocaleDateString()} • {event.startTime} - {event.endTime}
+                      </span>
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2" />
+                      <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
                       <a
-                        href={getGoogleMapsUrl(
-                          event.location.name,
-                          event.location.address
-                        )}
+                        href={getGoogleMapsUrl(event.location.name, event.location.address)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary-600 hover:text-primary-700 flex items-center"
+                        className="text-primary-600 hover:text-primary-700 flex items-center truncate"
                       >
                         {event.location.name}
-                        <ExternalLink className="h-3 w-3 ml-1" />
+                        <ExternalLink className="h-3 w-3 ml-1 flex-shrink-0" />
                       </a>
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
@@ -421,33 +419,25 @@ const EventsPage: React.FC = () => {
                       href={`https://sepolia.etherscan.io/tx/${event.transaction_hash}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-4 block relative group"
+                      className="mt-4 block relative group w-full"
                       style={{
                         borderRadius: "12px",
                         overflow: "hidden",
-                        boxShadow: "0 0 1px 1px #00e1ff, 0 0 10px 1px #fff", // Less intense
-                        background:
-                          "linear-gradient(90deg, #e0f7fa 0%, #fff 100%)", // Softer color
+                        boxShadow: "0 0 1px 1px #00e1ff, 0 0 10px 1px #fff",
+                        background: "linear-gradient(90deg, #e0f7fa 0%, #fff 100%)",
                         position: "relative",
                         zIndex: 1,
                         border: "2px solid #00e1ff",
                       }}
                     >
-                      <span
-                        className="flex items-center justify-center px-4 py-2 text-center font-bold text-lg text-gray-900 tracking-wide relative z-10"
-                        style={{
-                          textShadow: "0 0 1px #fff, 0 0 2px #00e1ff",
-                          letterSpacing: "1px",
-                        }}
-                      >
-                        {/* Ethereum SVG logo */}
+                      <span className="flex items-center justify-center px-2 sm:px-4 py-2 text-center font-bold text-sm sm:text-base text-gray-900 tracking-wide relative z-10 whitespace-nowrap">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          width="22"
-                          height="22"
+                          width="18"
+                          height="18"
                           viewBox="0 0 32 32"
                           fill="none"
-                          className="mr-2"
+                          className="mr-2 flex-shrink-0"
                         >
                           <g>
                             <polygon

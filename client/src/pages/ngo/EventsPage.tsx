@@ -259,6 +259,8 @@ const EventsPage: React.FC = () => {
           <button
             onClick={() => setShowEventImages(null)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+            title="Back"
+            aria-label="Back"
           >
             ←
           </button>
@@ -853,11 +855,13 @@ const CreateEventModal: React.FC<{
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900">
-              Create New Event
+              Create Event
             </h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
+              title="Close"
+              aria-label="Close"
             >
               <Plus className="h-6 w-6 rotate-45" />
             </button>

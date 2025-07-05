@@ -16,7 +16,7 @@ async function main() {
   const aquaCoinAddress = await aquaCoin.getAddress();
   console.log(`AquaCoin deployed to: ${aquaCoinAddress}`);
 
-  // 2. Deploy Tidey, patssing AquaCoin address and owner address
+  // 2. Deploy Tidey, passing AquaCoin address and owner address
   const Tidey = await hre.ethers.getContractFactory("Tidey");
   // const tidey = await Tidey.deploy(aquaCoinAddress, deployer.address);
   const tidey = await Tidey.deploy(aquaCoinAddress, myAddress);
@@ -25,7 +25,20 @@ async function main() {
   const tideyAddress = await tidey.getAddress();
   console.log(`Tidey deployed to: ${tideyAddress}`);
 
-  // 3. Save addresses for frontend
+  // 3. Deploy NFT contract (TideyNFT)
+  // const NFT = await hre.ethers.getContractFactory("TideyNFT");
+  // const baseURI = "https://api.tidey.xyz/metadata/";
+  // const nft = await NFT.deploy(
+  //   aquaCoinAddress,
+  //   baseURI,
+  //   tideyAddress, // treasury is Tidey contract
+  //   myAddress     // owner is your address
+  // );
+  // await nft.waitForDeployment();
+  // const nftAddress = await nft.getAddress();
+  // console.log(`TideyNFT deployed to: ${nftAddress}`);
+
+  // 4. Save addresses for frontend
   const contractsDir = path.join(
     __dirname,
     "..",
@@ -38,11 +51,12 @@ async function main() {
   if (!fs.existsSync(contractsDir)) {
     fs.mkdirSync(contractsDir, { recursive: true });
   }
-
+  // export const NFT_ADDRESS: Address = '${nftAddress}';
   const contractConfig = `import { Address } from 'viem';
 
 export const AQUACOIN_ADDRESS: Address = '${aquaCoinAddress}';
 export const TIDEY_ADDRESS: Address = '${tideyAddress}';
+
 
 export const NETWORK_CONFIG = {
   chainId: 31337,
@@ -53,7 +67,7 @@ export const NETWORK_CONFIG = {
 
   fs.writeFileSync(path.join(contractsDir, "config.ts"), contractConfig);
 
-  console.log("✅ Contract addresses saved to server/src/contracts/config.ts");
+  console.log("✅ Contract addresses saved to client/src/contracts/config.ts");
 }
 
 main().catch((error) => {
