@@ -18,6 +18,7 @@ export interface ILeaderboard extends Document {
     };
   }[];
   lastUpdated: Date;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,6 +81,9 @@ const leaderboardSchema = new Schema<ILeaderboard>({
   lastUpdated: {
     type: Date,
     default: Date.now
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

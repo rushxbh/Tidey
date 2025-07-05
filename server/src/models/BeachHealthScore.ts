@@ -20,6 +20,7 @@ export interface IBeachHealthScore extends Document {
   assessedBy: mongoose.Types.ObjectId;
   assessmentDate: Date;
   notes?: string;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -97,6 +98,9 @@ const beachHealthScoreSchema = new Schema<IBeachHealthScore>({
   notes: {
     type: String,
     maxlength: 1000
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

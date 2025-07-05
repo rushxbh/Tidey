@@ -15,6 +15,7 @@ export interface IWasteLog extends Document {
   photos: string[];
   description?: string;
   timestamp: Date;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,6 +72,9 @@ const wasteLogSchema = new Schema<IWasteLog>({
   timestamp: {
     type: Date,
     default: Date.now
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

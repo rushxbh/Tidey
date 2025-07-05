@@ -7,6 +7,7 @@ export interface IUserAchievement extends Document {
   completed: boolean;
   completedAt?: Date;
   coinsAwarded: boolean;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +38,9 @@ const userAchievementSchema = new Schema<IUserAchievement>({
   coinsAwarded: {
     type: Boolean,
     default: false
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

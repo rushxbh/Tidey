@@ -24,6 +24,7 @@ export interface IUser extends Document {
   website?: string;
   verified?: boolean;
 
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 
@@ -116,6 +117,9 @@ const userSchema = new Schema<IUser>(
     verified: {
       type: Boolean,
       default: false,
+    },
+    transaction_hash: {
+      type: String
     },
   },
   {

@@ -20,6 +20,7 @@ import { TideyABI } from "../../generated/factories/contracts/Tidey__factory";
 import { TIDEY_ADDRESS } from "../../contracts/config";
 import { useAccount } from "wagmi";
 import { ethers } from "ethers";
+import { text } from "stream/consumers";
 
 interface Event {
   _id: string;
@@ -773,6 +774,7 @@ const CreateEventModal: React.FC<{
       if (!receipt || receipt.status !== 1) {
         throw new Error("Blockchain transaction failed or was reverted");
       }
+      const txHash = tx;
 
       console.log("Blockchain registration successful");
       setBlockchainRegistered(true);
@@ -782,8 +784,9 @@ const CreateEventModal: React.FC<{
       const NewstartDateTime = new Date(
         `${formData.date}T${formData.startTime}`
       );
+
       const NEwendDateTime = new Date(`${formData.date}T${formData.endTime}`);
-      const volunteeringHours = Math.floor(
+      const formattedvolunteeringHours = Math.floor(
         (NEwendDateTime.getTime() - NewstartDateTime.getTime()) /
           (1000 * 60 * 60)
       );
@@ -802,6 +805,8 @@ const CreateEventModal: React.FC<{
           date: formData.date,
           startTime: formData.startTime,
           endTime: formData.endTime,
+          transaction_hash: txHash,
+          volunteeringHours: formattedvolunteeringHours,
           maxParticipants: parseInt(formData.maxParticipants),
           requirements: formData.requirements
             .split(",")
@@ -811,7 +816,6 @@ const CreateEventModal: React.FC<{
             .split(",")
             .map((e) => e.trim())
             .filter((e) => e),
-          volunteeringHours,
         };
 
         await axios.post("/api/events", eventData);

@@ -9,6 +9,7 @@ export interface IEmailTemplate extends Document {
   category: 'welcome' | 'event_reminder' | 'achievement' | 'newsletter' | 'system';
   isActive: boolean;
   createdBy: mongoose.Types.ObjectId;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,6 +52,9 @@ const emailTemplateSchema = new Schema<IEmailTemplate>({
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

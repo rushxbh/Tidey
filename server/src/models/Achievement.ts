@@ -16,6 +16,7 @@ export interface IAchievement extends Document {
   };
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   isActive: boolean;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,6 +77,9 @@ const achievementSchema = new Schema<IAchievement>({
   isActive: {
     type: Boolean,
     default: true
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

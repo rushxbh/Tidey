@@ -9,6 +9,7 @@ export interface IAttendance extends Document {
   qrCodeScanned: boolean;
   status: 'registered' | 'checked-in' | 'checked-out' | 'no-show';
   notes?: string;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,6 +48,9 @@ const attendanceSchema = new Schema<IAttendance>({
   notes: {
     type: String,
     maxlength: 500
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

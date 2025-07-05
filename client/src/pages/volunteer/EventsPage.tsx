@@ -23,6 +23,7 @@ interface Event {
   };
   images: string[];
   participants: string[];
+  transaction_hash:string;
 }
 
 interface Attendance {
@@ -35,6 +36,7 @@ interface Attendance {
 
 const EventsPage: React.FC = () => {
   const { user } = useAuth();
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [attendances, setAttendances] = useState<{ [key: string]: Attendance }>({});
   const [filter, setFilter] = useState('all');
@@ -293,7 +295,9 @@ const EventsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Beach Cleanup Events</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Beach Cleanup Events
+        </h1>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <Filter className="h-5 w-5 text-gray-400" />
@@ -324,8 +328,12 @@ const EventsPage: React.FC = () => {
       {events.length === 0 && !loading ? (
         <div className="text-center py-12">
           <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No events found</h3>
-          <p className="text-gray-600">Try adjusting your filters or check back later for new events.</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No events found
+          </h3>
+          <p className="text-gray-600">
+            Try adjusting your filters or check back later for new events.
+          </p>
         </div>
       ) : (
         <>
@@ -345,7 +353,11 @@ const EventsPage: React.FC = () => {
                 )}
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(event.status)}`}>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                        event.status
+                      )}`}
+                    >
                       {getStatusText(event.status)}
                     </span>
                     {attendances[event._id] && (
@@ -354,19 +366,27 @@ const EventsPage: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{event.title}</h3>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{event.description}</p>
-                  
+
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    {event.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    {event.description}
+                  </p>
+
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
                       <Calendar className="h-4 w-4 mr-2" />
-                      {new Date(event.date).toLocaleDateString()} • {event.startTime} - {event.endTime}
+                      {new Date(event.date).toLocaleDateString()} •{" "}
+                      {event.startTime} - {event.endTime}
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-2" />
                       <a
-                        href={getGoogleMapsUrl(event.location.name, event.location.address)}
+                        href={getGoogleMapsUrl(
+                          event.location.name,
+                          event.location.address
+                        )}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary-600 hover:text-primary-700 flex items-center"
@@ -377,18 +397,108 @@ const EventsPage: React.FC = () => {
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <Users className="h-4 w-4 mr-2" />
-                      {event.currentParticipants}/{event.maxParticipants} participants
+                      {event.currentParticipants}/{event.maxParticipants}{" "}
+                      participants
                     </div>
                   </div>
 
                   <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
                     <div
                       className="bg-primary-600 h-2 rounded-full"
-                      style={{ width: `${(event.currentParticipants / event.maxParticipants) * 100}%` }}
+                      style={{
+                        width: `${
+                          (event.currentParticipants / event.maxParticipants) *
+                          100
+                        }%`,
+                      }}
                     ></div>
                   </div>
 
                   {getEventButtonContent(event)}
+
+                  {event.transaction_hash && (
+                    <a
+                      href={`https://sepolia.etherscan.io/tx/${event.transaction_hash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 block relative group"
+                      style={{
+                        borderRadius: "12px",
+                        overflow: "hidden",
+                        boxShadow: "0 0 1px 1px #00e1ff, 0 0 10px 1px #fff", // Less intense
+                        background:
+                          "linear-gradient(90deg, #e0f7fa 0%, #fff 100%)", // Softer color
+                        position: "relative",
+                        zIndex: 1,
+                        border: "2px solid #00e1ff",
+                      }}
+                    >
+                      <span
+                        className="flex items-center justify-center px-4 py-2 text-center font-bold text-lg text-gray-900 tracking-wide relative z-10"
+                        style={{
+                          textShadow: "0 0 1px #fff, 0 0 2px #00e1ff",
+                          letterSpacing: "1px",
+                        }}
+                      >
+                        {/* Ethereum SVG logo */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="22"
+                          height="22"
+                          viewBox="0 0 32 32"
+                          fill="none"
+                          className="mr-2"
+                        >
+                          <g>
+                            <polygon
+                              fill="#343434"
+                              points="16,2 16,22 29,16.5"
+                            />
+                            <polygon
+                              fill="#8C8C8C"
+                              points="16,2 3,16.5 16,22"
+                            />
+                            <polygon
+                              fill="#3C3C3B"
+                              points="16,25 16,30 29,18"
+                            />
+                            <polygon fill="#8C8C8C" points="16,30 16,25 3,18" />
+                            <polygon
+                              fill="#141414"
+                              points="16,22 29,16.5 16,25"
+                            />
+                            <polygon
+                              fill="#393939"
+                              points="16,25 3,16.5 16,22"
+                            />
+                          </g>
+                        </svg>
+                        Track on Blockchain
+                      </span>
+                      {/* Subtle reflection */}
+                      <span
+                        className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                        style={{
+                          background:
+                            "linear-gradient(120deg, rgba(255,255,255,0.3) 0%, rgba(0,225,255,0.08) 60%, rgba(255,255,255,0.3) 100%)",
+                          opacity: 0.4, // Less shiny
+                          mixBlendMode: "screen",
+                          animation: "shine 2.5s linear infinite",
+                        }}
+                      />
+                      <style>
+                        {`
+                          @keyframes shine {
+                            0% { transform: translateX(-100%); }
+                            100% { transform: translateX(100%); }
+                          }
+                          .group:hover span[style*="pointer-events:none"] {
+                            opacity: 0.7;
+                          }
+                        `}
+                      </style>
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
@@ -404,21 +514,23 @@ const EventsPage: React.FC = () => {
               >
                 Previous
               </button>
-              
+
               <div className="flex space-x-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                  <button
-                    key={pageNum}
-                    onClick={() => setPage(pageNum)}
-                    className={`px-3 py-2 text-sm font-medium rounded-md ${
-                      page === pageNum
-                        ? 'bg-primary-600 text-white'
-                        : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                ))}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setPage(pageNum)}
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                        page === pageNum
+                          ? "bg-primary-600 text-white"
+                          : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  )
+                )}
               </div>
 
               <button
@@ -448,7 +560,9 @@ const EventsPage: React.FC = () => {
           onClose={() => setSelectedEventForUpload(null)}
           onSuccess={() => {
             setSelectedEventForUpload(null);
-            showSuccessNotification('Images uploaded successfully! You earned 25 AquaCoins!');
+            showSuccessNotification(
+              "Images uploaded successfully! You earned 25 AquaCoins!"
+            );
           }}
         />
       )}

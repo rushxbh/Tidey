@@ -16,6 +16,7 @@ export interface ICertificate extends Document {
   };
   issuedAt: Date;
   status: 'pending' | 'issued' | 'failed';
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,6 +78,9 @@ const certificateSchema = new Schema<ICertificate>({
     type: String,
     enum: ['pending', 'issued', 'failed'],
     default: 'pending'
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

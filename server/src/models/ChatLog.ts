@@ -14,6 +14,7 @@ export interface IChatLog extends Document {
     ipAddress?: string;
     location?: string;
   };
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +55,9 @@ const chatLogSchema = new Schema<IChatLog>({
     userAgent: String,
     ipAddress: String,
     location: String
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

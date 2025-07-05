@@ -14,6 +14,7 @@ export interface IEventImage extends Document {
   approvedBy?: mongoose.Types.ObjectId;
   approvedAt?: Date;
   coinsAwarded: boolean;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +69,9 @@ const eventImageSchema = new Schema<IEventImage>({
   coinsAwarded: {
     type: Boolean,
     default: false
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true

@@ -25,6 +25,7 @@ export interface IEvent extends Document {
   wasteCollected?: number;
   beachHealthScoreBefore?: number;
   beachHealthScoreAfter?: number;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
   volunteeringHours: number;
@@ -143,6 +144,9 @@ const eventSchema = new Schema<IEvent>(
       type: Number,
       min: 0,
       max: 100,
+    },
+    transaction_hash: {
+      type: String,
     },
   },
   {

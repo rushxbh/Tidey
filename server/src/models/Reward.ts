@@ -21,6 +21,7 @@ export interface IReward extends Document {
     status: 'pending' | 'fulfilled' | 'cancelled';
   }[];
   createdBy: mongoose.Types.ObjectId;
+  transaction_hash?: string;
   createdAt: Date;
   updatedAt: Date;
   calculateRating(): number;
@@ -107,6 +108,9 @@ const rewardSchema = new Schema<IReward>({
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+  transaction_hash: {
+    type: String
   }
 }, {
   timestamps: true
