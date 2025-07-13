@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { useWriteContract, useReadContract } from "wagmi";
 import { TIDEY_ADDRESS } from "../../contracts/config";
-import { TideyABI } from "../../generated/factories/contracts/Tidey__factory";
-import { NFT_ADDRESS } from "../../contracts/config";
-import { TideyNFTABI as NFT_ABI } from "../../generated/factories/contracts/NFT.sol/TideyNFT__factory";
+
 import {
   UserPlus,
   UserMinus,

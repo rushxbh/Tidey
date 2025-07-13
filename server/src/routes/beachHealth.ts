@@ -5,12 +5,22 @@ import sharp from 'sharp';
 import BeachHealthScore, { IBeachHealthScore } from '../models/BeachHealthScore';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
-import path from 'path';
-import fs from 'fs';
+import axios from 'axios'; // Import axios for making HTTP requests to ML API
+import cloudinary from 'cloudinary'; // Import cloudinary
+import dotenv from 'dotenv'; // For loading environment variables
+
+dotenv.config(); // Load environment variables from .env file
 
 const router = express.Router();
 
-// Configure multer for image uploads
+// Configure Cloudinary
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Configure multer for image uploads (still using memory storage for Cloudinary)
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
@@ -49,32 +59,47 @@ router.post('/scan', authenticateToken, requireRole(['ngo']), upload.single('ima
   }
 
   try {
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'uploads', 'beach-health');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+    // 1. Upload image to Cloudinary
+    const b64 = Buffer.from(req.file.buffer).toString('base64');
+    const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+    const cloudinaryUploadResult = await cloudinary.v2.uploader.upload(dataURI, {
+      folder: 'beach-scans', // Optional: organize uploads in a specific folder
+      resource_type: 'image',
+    });
 
-    // Process and save image
-    const filename = `${Date.now()}-${req.user!._id}-beach-scan.jpg`;
-    const filepath = path.join(uploadsDir, filename);
+    const imageUrl = cloudinaryUploadResult.secure_url;
 
-    await sharp(req.file.buffer)
-      .resize(1200, 800, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 })
-      .toFile(filepath);
+    // 2. Call ML API with the Cloudinary image URL
+    const mlApiUrl = process.env.ML_API_URL || 'http://localhost:8000/analyze'; // Ensure this matches your ML API URL
+    const mlResponse = await axios.post(mlApiUrl, {
+      image_url: imageUrl,
+      return_annotated_image: true // Request annotated image from ML model
+    });
 
-    const imageUrl = `/uploads/beach-health/${filename}`;
+    const mlAnalysisResult = mlResponse.data;
 
-    // Simulate ML analysis (in real implementation, this would call your ML model)
-    const mockAnalysis = {
-      wasteAmount: Math.floor(Math.random() * 40) + 60, // 60-100
-      waterQuality: Math.floor(Math.random() * 30) + 70, // 70-100
-      biodiversity: Math.floor(Math.random() * 35) + 65, // 65-100
-      humanImpact: Math.floor(Math.random() * 25) + 75, // 75-100
+    // Map ML analysis result to IMLAnalysis structure
+    const mappedMLAnalysis = {
+      wasteTypes: mlAnalysisResult.detected_objects.map((obj: any) => obj.description),
+      pollutionLevel: mlAnalysisResult.category, // Use the category from ML as pollution level
+      recommendations: mlAnalysisResult.recommendations.split('. '), // Split recommendations string into array
+      overallConfidence: mlAnalysisResult.overall_confidence,
+      detailedAnalysis: mlAnalysisResult.detailed_analysis,
+      detectedObjects: mlAnalysisResult.detected_objects.map((obj: any) => ({
+        category: obj.category,
+        confidence: obj.confidence,
+        severity: obj.severity,
+        description: obj.description,
+        boundingBox: obj.bounding_box ? {
+          x: obj.bounding_box.x,
+          y: obj.bounding_box.y,
+          width: obj.bounding_box.width,
+          height: obj.bounding_box.height,
+        } : undefined,
+      })),
     };
 
-    // Create beach health score record
+    // 3. Create beach health score record
     const beachHealthScore = new BeachHealthScore({
       location: {
         name: req.body.location,
@@ -83,8 +108,16 @@ router.post('/scan', authenticateToken, requireRole(['ngo']), upload.single('ima
           longitude: req.body.longitude ? parseFloat(req.body.longitude) : 0
         }
       },
-      factors: mockAnalysis,
+      score: mlAnalysisResult.cleanliness_score, // Use the score from ML analysis
+      factors: { // Populate factors from ML if available, otherwise use dummy/derived
+        wasteAmount: Math.round((1 - (mlAnalysisResult.detected_objects.filter((obj: any) => obj.category.includes('plastic') || obj.category.includes('debris')).length / (mlAnalysisResult.detected_objects.length || 1))) * 100),
+        waterQuality: Math.round(mlAnalysisResult.overall_confidence * 100), // Example: use overall confidence for water quality
+        biodiversity: Math.round(mlAnalysisResult.beach_characteristics.natural_elements.vegetation * 100), // Example: use vegetation score
+        humanImpact: Math.round((1 - (mlAnalysisResult.detected_objects.length / 10)) * 100) // Example: inverse of object count
+      },
       photos: [imageUrl],
+      annotatedImageUrl: mlAnalysisResult.annotated_image_base64 ? `data:image/jpeg;base64,${mlAnalysisResult.annotated_image_base64}` : undefined,
+      mlAnalysis: mappedMLAnalysis,
       assessedBy: req.user!._id,
       assessmentDate: new Date()
     });
@@ -98,16 +131,26 @@ router.post('/scan', authenticateToken, requireRole(['ngo']), upload.single('ima
         id: beachHealthScore._id,
         location: req.body.location,
         healthScore: beachHealthScore.score,
-        factors: mockAnalysis,
-        imageUrl,
+        factors: beachHealthScore.factors,
+        imageUrl: imageUrl,
+        annotatedImageUrl: beachHealthScore.annotatedImageUrl,
+        mlAnalysis: beachHealthScore.mlAnalysis,
         status: 'completed'
       }
     });
   } catch (error) {
     console.error('Beach health scan error:', error);
+    // Handle specific errors from Cloudinary or ML API
+    if (axios.isAxiosError(error) && error.response) {
+      return res.status(error.response.status).json({
+        success: false,
+        message: `ML API Error: ${error.response.data.detail || error.message}`
+      });
+    }
     res.status(500).json({
       success: false,
-      message: 'Failed to process beach health scan'
+      message: 'Failed to process beach health scan',
+      error: error instanceof Error ? error.message : 'An unknown error occurred'
     });
   }
 }));
@@ -123,9 +166,11 @@ router.get('/scans', authenticateToken, requireRole(['ngo']), asyncHandler(async
     location: scan.location.name,
     coordinates: scan.location.coordinates,
     imageUrl: scan.photos[0] || '',
+    annotatedImageUrl: scan.annotatedImageUrl || undefined, // Include annotated image
     healthScore: scan.score,
     factors: scan.factors,
     scanDate: scan.assessmentDate,
+    mlAnalysis: scan.mlAnalysis, // Include ML analysis
     status: 'completed'
   }));
 

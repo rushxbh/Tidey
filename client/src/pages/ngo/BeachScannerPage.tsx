@@ -1,7 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Upload, MapPin, BarChart3, Calendar, Download, Eye, Zap, Brain, Waves } from 'lucide-react';
+import { Camera, Upload, MapPin, BarChart3, Calendar, Download, Eye, Zap, Brain, Waves, XCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
+
+// Define the interface for the ML analysis results
+interface MLAnalysis {
+  wasteTypes: string[];
+  pollutionLevel: 'low' | 'medium' | 'high' | 'pristine' | 'very clean' | 'clean' | 'moderately clean' | 'needs attention' | 'poor' | 'heavily polluted';
+  recommendations: string[];
+  overallConfidence: number;
+  detailedAnalysis: any;
+  detectedObjects: Array<{
+    category: string;
+    confidence: number;
+    severity: number;
+    description: string;
+    boundingBox?: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+  }>;
+}
 
 interface ScanResult {
   id: string;
@@ -11,6 +32,7 @@ interface ScanResult {
     longitude: number;
   };
   imageUrl: string;
+  annotatedImageUrl?: string; // New field for annotated image
   healthScore: number;
   factors: {
     wasteAmount: number;
@@ -20,11 +42,7 @@ interface ScanResult {
   };
   scanDate: string;
   status: 'processing' | 'completed' | 'failed';
-  mlAnalysis?: {
-    wasteTypes: string[];
-    pollutionLevel: 'low' | 'medium' | 'high';
-    recommendations: string[];
-  };
+  mlAnalysis?: MLAnalysis; // Use the new MLAnalysis interface
 }
 
 const BeachScannerPage: React.FC = () => {
@@ -36,11 +54,12 @@ const BeachScannerPage: React.FC = () => {
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedResult, setSelectedResult] = useState<ScanResult | null>(null);
+  const [error, setError] = useState<string | null>(null); // State for error messages
 
   useEffect(() => {
     fetchScanHistory();
-    
-    // Check if coming from event images
+
+    // Check if coming from event images (optional, keep if needed)
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('eventId');
     if (eventId) {
@@ -52,12 +71,13 @@ const BeachScannerPage: React.FC = () => {
     try {
       const response = await axios.get(`/api/event-images/event/${eventId}`);
       const images = response.data.images;
-      
+
       if (images.length > 0) {
-        // Auto-process the first image
+        // Auto-process the first image (or provide options to user)
         const firstImage = images[0];
         setLocation(firstImage.event?.location?.name || 'Event Location');
-        // You could auto-upload this image for analysis
+        // You could potentially fetch the image from its URL and then set it as selectedFile
+        // For now, this part remains as a placeholder for event image integration logic.
       }
     } catch (error) {
       console.error('Error loading event images:', error);
@@ -67,17 +87,20 @@ const BeachScannerPage: React.FC = () => {
   const fetchScanHistory = async () => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
       const response = await axios.get('/api/beach-health/scans');
       setScanResults(response.data.scans || []);
     } catch (error) {
       console.error('Error fetching scan history:', error);
-      // Enhanced mock data with ML analysis
+      setError('Failed to fetch scan history. Please try again.');
+      // Keep mock data for development/demonstration if backend is not running
       setScanResults([
         {
           id: '1',
           location: 'Juhu Beach',
           coordinates: { latitude: 19.0896, longitude: 72.8656 },
-          imageUrl: 'https://images.pexels.com/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=400',
+          imageUrl: 'https://res.cloudinary.com/demo/image/upload/v1700000000/beach-scans/sample_beach_1.jpg',
+          annotatedImageUrl: 'https://res.cloudinary.com/demo/image/upload/v1700000000/beach-scans/sample_beach_1_annotated.jpg',
           healthScore: 78,
           factors: {
             wasteAmount: 75,
@@ -94,6 +117,12 @@ const BeachScannerPage: React.FC = () => {
               'Install more waste bins in high-traffic areas',
               'Organize weekly cleanup drives',
               'Implement plastic bottle deposit system'
+            ],
+            overallConfidence: 0.92,
+            detailedAnalysis: { /* ... ML detailed analysis ... */ },
+            detectedObjects: [
+              { category: 'plastic_bottles', confidence: 0.85, severity: 6, description: 'Plastic bottles', boundingBox: { x: 50, y: 100, width: 30, height: 60 } },
+              { category: 'food_containers', confidence: 0.78, severity: 5, description: 'Food containers', boundingBox: { x: 120, y: 200, width: 40, height: 40 } },
             ]
           }
         },
@@ -101,7 +130,8 @@ const BeachScannerPage: React.FC = () => {
           id: '2',
           location: 'Marine Drive',
           coordinates: { latitude: 18.9441, longitude: 72.8262 },
-          imageUrl: 'https://images.pexels.com/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=400',
+          imageUrl: 'https://res.cloudinary.com/demo/image/upload/v1700000000/beach-scans/sample_beach_2.jpg',
+          annotatedImageUrl: 'https://res.cloudinary.com/demo/image/upload/v1700000000/beach-scans/sample_beach_2_annotated.jpg',
           healthScore: 85,
           factors: {
             wasteAmount: 88,
@@ -118,6 +148,12 @@ const BeachScannerPage: React.FC = () => {
               'Maintain current cleanliness standards',
               'Add recycling bins for glass',
               'Continue regular maintenance'
+            ],
+            overallConfidence: 0.95,
+            detailedAnalysis: { /* ... ML detailed analysis ... */ },
+            detectedObjects: [
+              { category: 'paper_cardboard', confidence: 0.90, severity: 3, description: 'Paper cups', boundingBox: { x: 200, y: 150, width: 25, height: 30 } },
+              { category: 'plastic_bags', confidence: 0.70, severity: 7, description: 'Plastic bags', boundingBox: { x: 250, y: 180, width: 50, height: 40 } },
             ]
           }
         }
@@ -130,119 +166,88 @@ const BeachScannerPage: React.FC = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setError('File size exceeds 10MB limit.');
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        return;
+      }
       setSelectedFile(file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
+      setError(null); // Clear previous errors
     }
-  };
-
-  const simulateMLAnalysis = (imageFile: File): Promise<ScanResult> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Simulate ML analysis results
-        const mockAnalysis = {
-          wasteAmount: Math.floor(Math.random() * 40) + 60, // 60-100
-          waterQuality: Math.floor(Math.random() * 30) + 70, // 70-100
-          biodiversity: Math.floor(Math.random() * 35) + 65, // 65-100
-          humanImpact: Math.floor(Math.random() * 25) + 75, // 75-100
-        };
-
-        const overallScore = Math.round(
-          (mockAnalysis.wasteAmount + mockAnalysis.waterQuality + 
-           mockAnalysis.biodiversity + mockAnalysis.humanImpact) / 4
-        );
-
-        const wasteTypes = [
-          'Plastic bottles', 'Food wrappers', 'Cigarette butts', 'Glass bottles',
-          'Paper cups', 'Plastic bags', 'Aluminum cans', 'Fishing nets'
-        ];
-        
-        const detectedWaste = wasteTypes
-          .sort(() => 0.5 - Math.random())
-          .slice(0, Math.floor(Math.random() * 3) + 2);
-
-        const pollutionLevel = overallScore >= 80 ? 'low' : overallScore >= 60 ? 'medium' : 'high';
-
-        const recommendations = {
-          low: [
-            'Maintain current cleanliness standards',
-            'Continue regular monitoring',
-            'Add more recycling options'
-          ],
-          medium: [
-            'Increase cleanup frequency',
-            'Install additional waste bins',
-            'Implement waste segregation system'
-          ],
-          high: [
-            'Immediate cleanup intervention required',
-            'Deploy emergency cleanup crew',
-            'Investigate pollution sources'
-          ]
-        };
-
-        const result: ScanResult = {
-          id: Date.now().toString(),
-          location: location || 'Unknown Location',
-          coordinates: { latitude: 0, longitude: 0 },
-          imageUrl: URL.createObjectURL(imageFile),
-          healthScore: overallScore,
-          factors: mockAnalysis,
-          scanDate: new Date().toISOString(),
-          status: 'completed',
-          mlAnalysis: {
-            wasteTypes: detectedWaste,
-            pollutionLevel,
-            recommendations: recommendations[pollutionLevel]
-          }
-        };
-
-        resolve(result);
-      }, 3000); // Simulate 3-second processing time
-    });
   };
 
   const handleUpload = async () => {
     if (!selectedFile || !location) {
-      alert('Please select an image and enter location details');
+      setError('Please select an image and enter location details.');
       return;
     }
 
     setUploading(true);
+    setError(null); // Clear previous errors
+
     try {
-      // Simulate ML analysis
-      const result = await simulateMLAnalysis(selectedFile);
-      
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+      formData.append('location', location);
+      // You can add latitude and longitude if you have them
+      // formData.append('latitude', '0');
+      // formData.append('longitude', '0');
+
+      const response = await axios.post('/api/beach-health/scan', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const result: ScanResult = response.data.result;
+
       // Add to results
       setScanResults(prev => [result, ...prev]);
-      
+
       // Reset form
       setSelectedFile(null);
       setPreviewUrl(null);
       setLocation('');
-      
+
       // Show detailed result
       setSelectedResult(result);
-      
+
       // Show success notification
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
-      notification.innerHTML = `
-        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-        </svg>
-        <span>Beach health analysis completed successfully!</span>
-      `;
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 3000);
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
+      showNotification('Beach health analysis completed successfully!', 'success');
+
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      if (axios.isAxiosError(err) && err.response) {
+        setError(err.response.data.message || 'Failed to upload image. Please try again.');
+      } else {
+        setError('Failed to upload image. An unknown error occurred.');
+      }
+      showNotification('Failed to upload image. Please try again.', 'error');
     } finally {
       setUploading(false);
     }
+  };
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2 ${
+      type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.innerHTML = `
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>' : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'}
+      </svg>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 3000);
   };
 
   const getScoreColor = (score: number) => {
@@ -259,7 +264,7 @@ const BeachScannerPage: React.FC = () => {
 
   const exportResults = () => {
     const csvData = [
-      ['Location', 'Health Score', 'Waste Amount', 'Water Quality', 'Biodiversity', 'Human Impact', 'Scan Date'],
+      ['Location', 'Health Score', 'Waste Amount', 'Water Quality', 'Biodiversity', 'Human Impact', 'Scan Date', 'Pollution Level', 'Detected Waste Types', 'Recommendations'],
       ...scanResults.map(result => [
         result.location,
         result.healthScore,
@@ -267,12 +272,15 @@ const BeachScannerPage: React.FC = () => {
         result.factors.waterQuality,
         result.factors.biodiversity,
         result.factors.humanImpact,
-        new Date(result.scanDate).toLocaleDateString()
+        new Date(result.scanDate).toLocaleDateString(),
+        result.mlAnalysis?.pollutionLevel || 'N/A',
+        result.mlAnalysis?.wasteTypes.join('; ') || 'N/A',
+        result.mlAnalysis?.recommendations.join('; ') || 'N/A'
       ])
     ];
 
-    const csvContent = csvData.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csvContent = csvData.map(row => row.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -290,7 +298,7 @@ const BeachScannerPage: React.FC = () => {
             onClick={() => setSelectedResult(null)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
           >
-            ←
+            ← Back to Scanner
           </button>
           <h1 className="text-2xl font-bold text-gray-900">Beach Health Analysis</h1>
         </div>
@@ -300,7 +308,7 @@ const BeachScannerPage: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="card overflow-hidden">
               <img
-                src={selectedResult.imageUrl}
+                src={selectedResult.annotatedImageUrl || selectedResult.imageUrl} // Prefer annotated image
                 alt={selectedResult.location}
                 className="w-full h-64 object-cover"
               />
@@ -385,44 +393,83 @@ const BeachScannerPage: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">ML Analysis</h3>
               </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Detected Waste Types</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedResult.mlAnalysis?.wasteTypes.map((type, index) => (
-                      <span key={index} className="px-2 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-700">
-                        {type}
-                      </span>
-                    ))}
+
+              {selectedResult.mlAnalysis ? (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Detected Waste Types</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedResult.mlAnalysis.wasteTypes.length > 0 ? (
+                        selectedResult.mlAnalysis.wasteTypes.map((type, index) => (
+                          <span key={index} className="px-2 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-700">
+                            {type}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">No specific waste types detected.</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Pollution Level</h4>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      selectedResult.mlAnalysis.pollutionLevel === 'pristine' || selectedResult.mlAnalysis.pollutionLevel === 'very clean' || selectedResult.mlAnalysis.pollutionLevel === 'clean' ? 'bg-green-100 text-green-800' :
+                      selectedResult.mlAnalysis.pollutionLevel === 'moderately clean' || selectedResult.mlAnalysis.pollutionLevel === 'needs attention' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {selectedResult.mlAnalysis.pollutionLevel
+                        ? selectedResult.mlAnalysis.pollutionLevel.charAt(0).toUpperCase() + selectedResult.mlAnalysis.pollutionLevel.slice(1)
+                        : ''}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Recommendations</h4>
+                    <ul className="space-y-2">
+                      {selectedResult.mlAnalysis.recommendations.length > 0 ? (
+                        selectedResult.mlAnalysis.recommendations.map((rec, index) => (
+                          <li key={index} className="flex items-start space-x-2">
+                            <span className="text-green-600 mt-0.5">•</span>
+                            <span className="text-sm text-gray-700">{rec}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">No specific recommendations at this time.</span>
+                      )}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Overall Confidence</h4>
+                    <span className="text-sm text-gray-700">
+                      {(selectedResult.mlAnalysis.overallConfidence * 100).toFixed(2)}%
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Detected Objects</h4>
+                    <div className="space-y-2">
+                      {selectedResult.mlAnalysis.detectedObjects.length > 0 ? (
+                        selectedResult.mlAnalysis.detectedObjects.map((obj, index) => (
+                          <div key={index} className="text-sm text-gray-700">
+                            <strong>{obj.description}</strong> (Confidence: {(obj.confidence * 100).toFixed(1)}%, Severity: {obj.severity}/10)
+                            {obj.boundingBox && (
+                              <span className="text-gray-500 ml-2">
+                                [x:{obj.boundingBox.x}, y:{obj.boundingBox.y}, w:{obj.boundingBox.width}, h:{obj.boundingBox.height}]
+                              </span>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">No specific objects detected.</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                
-                <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Pollution Level</h4>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedResult.mlAnalysis?.pollutionLevel === 'low' ? 'bg-green-100 text-green-800' :
-                    selectedResult.mlAnalysis?.pollutionLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {selectedResult.mlAnalysis?.pollutionLevel
-                      ? selectedResult.mlAnalysis.pollutionLevel.charAt(0).toUpperCase() + selectedResult.mlAnalysis.pollutionLevel.slice(1)
-                      : ''}
-                  </span>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Recommendations</h4>
-                  <ul className="space-y-2">
-                    {selectedResult.mlAnalysis?.recommendations.map((rec, index) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <span className="text-green-600 mt-0.5">•</span>
-                        <span className="text-sm text-gray-700">{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              ) : (
+                <p className="text-gray-500">ML analysis data not available for this scan.</p>
+              )}
             </div>
 
             <div className="card">
@@ -432,27 +479,27 @@ const BeachScannerPage: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">Impact Insights</h3>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2">Environmental Impact</h4>
                   <p className="text-sm text-gray-600">
-                    This beach has a {selectedResult.healthScore >= 80 ? 'positive' : selectedResult.healthScore >= 60 ? 'moderate' : 'concerning'} environmental health score. 
-                    {selectedResult.healthScore >= 80 
+                    This beach has a {selectedResult.healthScore >= 80 ? 'positive' : selectedResult.healthScore >= 60 ? 'moderate' : 'concerning'} environmental health score.
+                    {selectedResult.healthScore >= 80
                       ? ' Continued maintenance and regular monitoring is recommended.'
                       : selectedResult.healthScore >= 60
                       ? ' Targeted cleanup efforts would improve conditions.'
                       : ' Immediate intervention is needed to address pollution issues.'}
                   </p>
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2">Suggested Actions</h4>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Zap className="h-4 w-4 text-yellow-600" />
                       <span className="text-sm text-gray-700">
-                        {selectedResult.healthScore >= 80 
+                        {selectedResult.healthScore >= 80
                           ? 'Schedule monthly maintenance cleanups'
                           : selectedResult.healthScore >= 60
                           ? 'Organize bi-weekly volunteer events'
@@ -462,7 +509,7 @@ const BeachScannerPage: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <Zap className="h-4 w-4 text-yellow-600" />
                       <span className="text-sm text-gray-700">
-                        {selectedResult.healthScore >= 80 
+                        {selectedResult.healthScore >= 80
                           ? 'Install educational signage about conservation'
                           : selectedResult.healthScore >= 60
                           ? 'Add more waste collection points'
@@ -472,7 +519,7 @@ const BeachScannerPage: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <Zap className="h-4 w-4 text-yellow-600" />
                       <span className="text-sm text-gray-700">
-                        {selectedResult.healthScore >= 80 
+                        {selectedResult.healthScore >= 80
                           ? 'Monitor for seasonal changes'
                           : selectedResult.healthScore >= 60
                           ? 'Conduct water quality testing'
@@ -499,18 +546,28 @@ const BeachScannerPage: React.FC = () => {
         </button>
       </div>
 
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+          <strong className="font-bold">Error!</strong>
+          <span className="block sm:inline ml-2">{error}</span>
+          <span className="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onClick={() => setError(null)}>
+            <XCircle className="h-5 w-5 text-red-500" />
+          </span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upload Section */}
         <div className="card">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Upload Beach Image for AI Analysis</h2>
-          
+
           <div className="space-y-4">
             {/* File Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Beach Image
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors relative">
                 {previewUrl ? (
                   <div className="space-y-4">
                     <img
@@ -522,6 +579,7 @@ const BeachScannerPage: React.FC = () => {
                       onClick={() => {
                         setSelectedFile(null);
                         setPreviewUrl(null);
+                        setError(null); // Clear error on image removal
                       }}
                       className="text-sm text-red-600 hover:text-red-700"
                     >
@@ -582,7 +640,7 @@ const BeachScannerPage: React.FC = () => {
         {/* Recent Scan Results */}
         <div className="card">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Scan Results</h2>
-          
+
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
@@ -597,8 +655,8 @@ const BeachScannerPage: React.FC = () => {
           ) : (
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {scanResults.map((result) => (
-                <div 
-                  key={result.id} 
+                <div
+                  key={result.id}
                   className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => setSelectedResult(result)}
                 >
@@ -613,7 +671,7 @@ const BeachScannerPage: React.FC = () => {
                       {result.healthScore}/100
                     </span>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Waste Amount</span>
@@ -664,9 +722,9 @@ const BeachScannerPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-3 flex justify-end">
-                    <button 
+                    <button
                       className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -699,7 +757,7 @@ const BeachScannerPage: React.FC = () => {
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-start space-x-3">
             <div className="p-2 bg-blue-100 rounded-lg mt-1">
               <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -711,7 +769,7 @@ const BeachScannerPage: React.FC = () => {
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-start space-x-3">
             <div className="p-2 bg-green-100 rounded-lg mt-1">
               <Zap className="h-5 w-5 text-green-600" />
